@@ -1,21 +1,3 @@
-// Random Emoji Generator
-const EMOJIS = [
-    '😀', '😃', '😄', '😁', '😆', '😅', '🤣', '😂', '🙂', '🙃',
-    '😉', '😊', '😇', '🥰', '😍', '🤩', '😘', '😗', '😚', '😙',
-    '😋', '😛', '😜', '🤪', '😝', '🤑', '🤗', '🤭', '🤫', '🤔',
-    '🤐', '🤨', '😐', '😑', '😶', '😏', '😒', '🙄', '😬', '🤥',
-    '😌', '😔', '😪', '🤤', '😴', '😷', '🤒', '🤕', '🤢', '🤮',
-    '🤧', '🥵', '🥶', '🥴', '😵', '🤯', '🤠', '🥳', '😎', '🤓',
-    '🧐', '😕', '😟', '🙁', '☹️', '😮', '😯', '😲', '😳', '🥺',
-    '😦', '😧', '😨', '😰', '😥', '😢', '😭', '😱', '😖', '😣',
-    '😞', '😓', '😩', '😫', '🥱', '😤', '😡', '😠', '🤬', '😈',
-    '👿', '💀', '☠️', '💩', '🤡', '👹', '👺', '👻', '👽', '👾'
-];
-
-function getRandomEmoji() {
-    return EMOJIS[Math.floor(Math.random() * EMOJIS.length)];
-}
-
 // API Base URL
 const API_BASE = '/api';
 
@@ -218,6 +200,33 @@ function formatTimeAgo(dateString) {
     if (days < 7) return `${days}일 전`;
 
     return `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, '0')}.${String(date.getDate()).padStart(2, '0')}`;
+}
+
+function parseContent(text) {
+    if (!text) return '';
+
+    // 1. Escape HTML first for security
+    let escaped = escapeHtml(text);
+
+    // 2. Format Line Breaks
+    escaped = escaped.replace(/\n/g, '<br>');
+
+    // 3. YouTube Embedding Logic
+    // Detect youtube.com/watch?v=... and youtu.be/...
+    const youtubeRegex = /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})(?:[^\s]*)/g;
+
+    return escaped.replace(youtubeRegex, (match, videoId) => {
+        return `
+            <div class="video-container">
+                <iframe 
+                    src="https://www.youtube.com/embed/${videoId}" 
+                    frameborder="0" 
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                    allowfullscreen>
+                </iframe>
+            </div>
+        `;
+    });
 }
 
 function isNewPost(dateString) {

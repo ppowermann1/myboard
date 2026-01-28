@@ -17,7 +17,11 @@
             </a>
             <div class="nav">
                 <span id="userInfo" class="user-info"></span>
-                <button id="logoutBtn" class="btn btn-secondary btn-compact" aria-label="로그아웃">
+                <button id="loginBtn" class="btn-cool btn-cool-compact hidden" onclick="location.href='/login.html'"
+                    aria-label="로그인">
+                    <i class="fas fa-sign-in-alt"></i> LOGIN
+                </button>
+                <button id="logoutBtn" class="btn btn-secondary btn-compact hidden" aria-label="로그아웃">
                     <i class="fas fa-lock-open"></i>
                 </button>
             </div>
@@ -86,16 +90,25 @@
         async function init() {
             // Check authentication
             currentUser = await getCurrentUser();
-            if (!currentUser) {
-                window.location.href = '/login.html';
-                return;
-            }
 
-            // Update user info
-            if (currentUser.role === 'ADMIN') {
-                document.getElementById('userInfo').innerHTML = `<span class="admin-nickname-container"><i class="fas fa-camera"></i> ${currentUser.nickname}</span>`;
+            const userInfo = document.getElementById('userInfo');
+            const loginBtn = document.getElementById('loginBtn');
+            const logoutBtn = document.getElementById('logoutBtn');
+
+            if (currentUser) {
+                // Logged in
+                if (currentUser.role === 'ADMIN') {
+                    userInfo.innerHTML = `<span class="admin-nickname-container"><i class="fas fa-camera"></i> ${escapeHtml(currentUser.nickname)}</span>`;
+                } else {
+                    userInfo.textContent = currentUser.nickname;
+                }
+                logoutBtn.classList.remove('hidden');
+                loginBtn.classList.add('hidden');
             } else {
-                document.getElementById('userInfo').textContent = currentUser.nickname;
+                // Guest
+                userInfo.textContent = '';
+                loginBtn.classList.remove('hidden');
+                logoutBtn.classList.add('hidden');
             }
 
             // Load posts
@@ -240,7 +253,7 @@
                             <div class="post-meta-left">
                                 ${post.authorRole === 'ADMIN' ?
                     `<span class="admin-nickname-container"><i class="fas fa-camera"></i> ${escapeHtml(post.authorNickname)}</span>` :
-                    `<span>${escapeHtml(post.authorNickname || '익명')}</span>`
+                    `<span class="user-nickname-badge"><i class="fas fa-user"></i> ${escapeHtml(post.authorNickname || '익명')}</span>`
                 }
                                 <span>${timeString}</span>
                             </div>

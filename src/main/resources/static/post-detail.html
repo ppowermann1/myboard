@@ -90,7 +90,6 @@
             }
 
             currentPost = post;
-            const emoji = getRandomEmoji();
             const authorName = post.authorNickname || post.authorUsername || '익명';
 
             // Check permissions
@@ -100,12 +99,12 @@
 
             document.getElementById('postContent').innerHTML = `
                 <div class="post-detail-header">
-                    <div class="avatar">${emoji}</div>
+                    <div class="avatar"><i class="fas fa-user"></i></div>
                     <div class="post-author-row">
                         <div class="author-info">
                             ${post.authorRole === 'ADMIN' ?
                     `<span class="admin-nickname-container"><i class="fas fa-camera"></i> ${post.authorNickname}</span>` :
-                    `<span class="post-author">${post.authorNickname}</span>`
+                    `<span class="user-nickname-badge"><i class="fas fa-user"></i> ${post.authorNickname}</span>`
                 }
                             <span class="view-count-detail"><i class="fas fa-eye"></i> ${formatNumber(post.viewCount)}</span>
                             
@@ -130,7 +129,7 @@
                     ${post.imageUrl2 ? `<img src="${post.imageUrl2}" alt="Post Image 2" onclick="openLightbox('${post.imageUrl2}')">` : ''}
                     ${post.imageUrl3 ? `<img src="${post.imageUrl3}" alt="Post Image 3" onclick="openLightbox('${post.imageUrl3}')">` : ''}
                 </div>
-                <div class="post-detail-content">${escapeHtml(post.content)}</div>
+                <div class="post-detail-content">${parseContent(post.content)}</div>
             `;
         }
 
@@ -163,7 +162,6 @@
             }
 
             container.innerHTML = comments.map(comment => {
-                const emoji = getRandomEmoji();
                 const isAdmin = currentUser && currentUser.role === 'ADMIN';
                 const isAuthor = currentUser && comment.authorUsername === currentUser.username;
                 const canDelete = isAuthor || isAdmin;
@@ -173,10 +171,9 @@
                         <div class="comment-header">
                             <div class="comment-author-row">
                             <div class="comment-author-info">
-                                <span class="comment-emoji">${emoji}</span>
                                 ${comment.authorRole === 'ADMIN' ?
                         `<span class="admin-nickname-container"><i class="fas fa-camera"></i> ${comment.authorNickname}</span>` :
-                        `<span class="comment-nickname">${comment.authorNickname}</span>`
+                        `<span class="user-nickname-badge"><i class="fas fa-user"></i> ${comment.authorNickname}</span>`
                     }
                                 <div class="post-date">${formatDate(comment.createdAt)}</div>
                             </div>
