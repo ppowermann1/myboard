@@ -94,13 +94,19 @@ public class PostService {
     }
 
     @Transactional
-    public PostResponse createPost(PostRequest request, MultipartFile image, User author) {
-        String imageUrl = null;
-        if (image != null && !image.isEmpty()) {
-            try {
-                imageUrl = fileService.saveFile(image);
-            } catch (IOException e) {
-                throw new RuntimeException("이미지 업로드 중 오류가 발생했습니다.", e);
+    public PostResponse createPost(PostRequest request, List<MultipartFile> images, User author) {
+        String[] imagePaths = new String[3];
+
+        if (images != null && !images.isEmpty()) {
+            for (int i = 0; i < Math.min(images.size(), 3); i++) {
+                MultipartFile image = images.get(i);
+                if (image != null && !image.isEmpty()) {
+                    try {
+                        imagePaths[i] = fileService.saveFile(image);
+                    } catch (IOException e) {
+                        throw new RuntimeException("이미지 업로드 중 오류가 발생했습니다.", e);
+                    }
+                }
             }
         }
 
@@ -109,7 +115,9 @@ public class PostService {
                 .content(request.getContent())
                 .author(author)
                 .password(request.getPassword())
-                .imageUrl(imageUrl)
+                .imageUrl(imagePaths[0])
+                .imageUrl2(imagePaths[1])
+                .imageUrl3(imagePaths[2])
                 .build();
 
         Post savedPost = postRepository.save(post);
@@ -151,6 +159,8 @@ public class PostService {
                 .authorUsername(post.getAuthor().getUsername())
                 .authorNickname(post.getAuthor().getNickname())
                 .imageUrl(post.getImageUrl())
+                .imageUrl2(post.getImageUrl2())
+                .imageUrl3(post.getImageUrl3())
                 .viewCount(post.getViewCount())
                 .createdAt(post.getCreatedAt())
                 .updatedAt(post.getUpdatedAt())

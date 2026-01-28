@@ -18,6 +18,8 @@ public class PostResponse {
     private String authorUsername;
     private String authorNickname;
     private String imageUrl;
+    private String imageUrl2;
+    private String imageUrl3;
     private Long viewCount;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

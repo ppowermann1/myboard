@@ -38,6 +38,12 @@ public class Post {
     @Column(length = 255)
     private String imageUrl;
 
+    @Column(length = 255)
+    private String imageUrl2;
+
+    @Column(length = 255)
+    private String imageUrl3;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "author_id", nullable = false)
     private User author;

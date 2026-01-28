@@ -48,9 +48,9 @@ public class PostController {
     @PostMapping(consumes = { "multipart/form-data" })
     public ResponseEntity<PostResponse> createPost(
             @Valid @RequestPart("post") PostRequest request,
-            @RequestPart(value = "image", required = false) MultipartFile image) throws IOException {
+            @RequestPart(value = "images", required = false) List<MultipartFile> images) throws IOException {
         User author = getCurrentUser();
-        return ResponseEntity.ok(postService.createPost(request, image, author));
+        return ResponseEntity.ok(postService.createPost(request, images, author));
     }
 
     @PutMapping("/{id}")

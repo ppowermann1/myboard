@@ -38,12 +38,12 @@
                 </div>
 
                 <div class="form-group">
-                    <label class="form-label" for="image">이미지 첨부</label>
+                    <label class="form-label" for="images">이미지 첨부 (최대 3장)</label>
                     <div class="image-upload-container">
-                        <input type="file" id="image" class="form-input" accept="image/*" onchange="previewImage(this)">
-                        <div id="imagePreview" class="image-preview hidden">
-                            <img id="previewImg" src="" alt="Preview">
-                            <button type="button" class="remove-image-btn" onclick="removeImage()">✕</button>
+                        <input type="file" id="images" class="form-input" accept="image/*" multiple
+                            onchange="handleImageSelect(this)">
+                        <div id="imagePreviewContainer" class="multi-image-preview-container">
+                            <!-- Previews will be added here -->
                         </div>
                     </div>
                 </div>
@@ -65,26 +65,50 @@
         const urlParams = new URLSearchParams(window.location.search);
         const postId = urlParams.get('id');
         let isEditMode = false;
-        let selectedImage = null;
+        let selectedFiles = []; // Array to store Selected File objects
 
-        function previewImage(input) {
-            if (input.files && input.files[0]) {
-                const file = input.files[0];
-                selectedImage = file;
+        function handleImageSelect(input) {
+            const files = Array.from(input.files);
 
-                const reader = new FileReader();
-                reader.onload = function (e) {
-                    document.getElementById('previewImg').src = e.target.result;
-                    document.getElementById('imagePreview').classList.remove('hidden');
-                }
-                reader.readAsDataURL(file);
-            }
+            // Limit to 3 images
+            const newFiles = files.slice(0, 3 - selectedFiles.length);
+
+            newFiles.forEach(file => {
+                selectedFiles.push(file);
+                renderPreview(file);
+            });
+
+            // Reset input so same file can be selected again if removed
+            input.value = '';
         }
 
-        function removeImage() {
-            document.getElementById('image').value = '';
-            document.getElementById('imagePreview').classList.add('hidden');
-            selectedImage = null;
+        function renderPreview(file) {
+            const container = document.getElementById('imagePreviewContainer');
+            const reader = new FileReader();
+
+            reader.onload = function (e) {
+                const previewItem = document.createElement('div');
+                previewItem.className = 'preview-item';
+                previewItem.dataset.name = file.name;
+
+                previewItem.innerHTML = `
+                    <img src="${e.target.result}" alt="Preview">
+                    <button type="button" class="remove-btn" onclick="removeSelectedImage('${file.name}')">✕</button>
+                `;
+                container.appendChild(previewItem);
+            }
+            reader.readAsDataURL(file);
+        }
+
+        function removeSelectedImage(fileName) {
+            selectedFiles = selectedFiles.filter(f => f.name !== fileName);
+            const container = document.getElementById('imagePreviewContainer');
+            const items = container.querySelectorAll('.preview-item');
+            items.forEach(item => {
+                if (item.dataset.name === fileName) {
+                    item.remove();
+                }
+            });
         }
 
         async function init() {
@@ -123,7 +147,8 @@
                     showSuccess('게시글이 수정되었습니다');
                     window.location.href = `/post-detail.html?id=${postId}`;
                 } else {
-                    const result = await createPost(title, content, '', selectedImage);
+                    // Pass array of files
+                    const result = await createPostCustom(title, content, '', selectedFiles);
                     showSuccess('게시글이 작성되었습니다');
                     window.location.href = `/post-detail.html?id=${result.id}`;
                 }
@@ -131,6 +156,30 @@
                 showError('게시글 저장에 실패했습니다');
             }
         });
+
+        // Custom createPost function to handle multiple images
+        async function createPostCustom(title, content, password, files) {
+            const formData = new FormData();
+            formData.append('post', new Blob([JSON.stringify({ title, content, password })], {
+                type: 'application/json'
+            }));
+
+            files.forEach(file => {
+                formData.append('images', file);
+            });
+
+            const token = localStorage.getItem('token');
+            const response = await fetch('/api/posts', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                },
+                body: formData
+            });
+
+            if (!response.ok) throw new Error('Create failed');
+            return response.json();
+        }
 
         init();
     </script>
