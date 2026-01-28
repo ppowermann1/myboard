@@ -1108,7 +1108,9 @@ body {
     border-radius: 50%;
     margin-right: 6px;
     vertical-align: middle;
-}/* Lightbox Modal */
+}
+
+/* Lightbox Modal */
 .lightbox-modal {
     position: fixed;
     top: 0;
@@ -1156,7 +1158,8 @@ body {
 }
 
 .post-detail-image img {
-    cursor: zoom-in; /* Indicate clickable */
+    cursor: zoom-in;
+    /* Indicate clickable */
 }
 
 /* Multi-image preview in form */
@@ -1242,6 +1245,30 @@ body {
 }
 
 .btn-delete-comment:hover {
-    color: #f44336;
-    background-color: rgba(244, 67, 54, 0.1);
+    color: #e74c3c;
+    background: rgba(231, 76, 60, 0.1);
+}
+
+/* Admin Styling */
+.admin-nickname-container {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: linear-gradient(135.2deg, rgba(255, 107, 107, 0.2) 0.6%, rgba(255, 230, 109, 0.2) 97.3%);
+    padding: 2px 8px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 107, 107, 0.3);
+    color: #ff6b6b;
+    font-weight: 700;
+    font-size: 0.9em;
+}
+
+.admin-nickname-container i {
+    font-size: 0.8em;
+}
+
+.dark-mode .admin-nickname-container {
+    background: linear-gradient(135.2deg, rgba(255, 107, 107, 0.3) 0.6%, rgba(255, 230, 109, 0.3) 97.3%);
+    border-color: rgba(255, 107, 107, 0.5);
+    color: #ff8e8e;
 }

@@ -78,7 +78,11 @@
             }
 
             // Update user info
-            document.getElementById('userInfo').textContent = currentUser.nickname;
+            if (currentUser.role === 'ADMIN') {
+                document.getElementById('userInfo').innerHTML = `<span class="admin-nickname-container"><i class="fas fa-camera"></i> ${currentUser.nickname}</span>`;
+            } else {
+                document.getElementById('userInfo').textContent = currentUser.nickname;
+            }
 
             // Load posts
             await loadPosts(0);
@@ -206,7 +210,10 @@
                         
                         <div class="mobile-post-footer">
                             <div class="post-meta-left">
-                                <span>${escapeHtml(post.authorNickname || '익명')}</span>
+                                ${post.authorRole === 'ADMIN' ?
+                    `<span class="admin-nickname-container"><i class="fas fa-camera"></i> ${escapeHtml(post.authorNickname)}</span>` :
+                    `<span>${escapeHtml(post.authorNickname || '익명')}</span>`
+                }
                                 <span>${timeString}</span>
                             </div>
                             <div class="post-meta-right">

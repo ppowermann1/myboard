@@ -194,6 +194,7 @@ public class PostService {
                 .content(post.getContent())
                 .authorUsername(post.getAuthor().getUsername())
                 .authorNickname(post.getAuthor().getNickname())
+                .authorRole(post.getAuthor().getRole().name())
                 .imageUrl(post.getImageUrl())
                 .imageUrl2(post.getImageUrl2())
                 .imageUrl3(post.getImageUrl3())

@@ -63,7 +63,8 @@ public class CommentService {
                 .content(comment.getContent())
                 .authorUsername(comment.getAuthor().getUsername())
                 .authorNickname(comment.getAuthor().getNickname())
-                .createdAt(comment.getCreatedAt())
+                .authorRole(comment.getAuthor().getRole().name())
+                .createdAt(comment.getCreatedAt().toString())
                 .build();
     }
 }

@@ -17,6 +17,7 @@ public class PostResponse {
     private String content;
     private String authorUsername;
     private String authorNickname;
+    private String authorRole;
     private String imageUrl;
     private String imageUrl2;
     private String imageUrl3;
