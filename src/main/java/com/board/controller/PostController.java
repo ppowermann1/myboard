@@ -53,10 +53,13 @@ public class PostController {
         return ResponseEntity.ok(postService.createPost(request, images, author));
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<PostResponse> updatePost(@PathVariable Long id, @Valid @RequestBody PostRequest request) {
+    @PutMapping(value = "/{id}", consumes = { "multipart/form-data" })
+    public ResponseEntity<PostResponse> updatePost(
+            @PathVariable Long id,
+            @Valid @RequestPart("post") PostRequest request,
+            @RequestPart(value = "images", required = false) List<MultipartFile> images) throws IOException {
         User author = getCurrentUser();
-        return ResponseEntity.ok(postService.updatePost(id, request, author));
+        return ResponseEntity.ok(postService.updatePost(id, request, images, author));
     }
 
     @DeleteMapping("/{id}")

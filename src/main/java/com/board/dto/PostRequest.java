@@ -19,4 +19,6 @@ public class PostRequest {
     private String content;
 
     private String password;
+
+    private java.util.List<String> preservedImages;
 }

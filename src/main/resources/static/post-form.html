@@ -65,50 +65,67 @@
         const urlParams = new URLSearchParams(window.location.search);
         const postId = urlParams.get('id');
         let isEditMode = false;
-        let selectedFiles = []; // Array to store Selected File objects
+        let selectedFiles = []; // Array to store New Selected File objects
+        let preservedImages = []; // Array to store Existing image URLs to keep
 
         function handleImageSelect(input) {
             const files = Array.from(input.files);
 
-            // Limit to 3 images
-            const newFiles = files.slice(0, 3 - selectedFiles.length);
+            // Limit to 3 images total (existing + new)
+            const availableSlots = 3 - (selectedFiles.length + preservedImages.length);
+            const newFiles = files.slice(0, Math.max(0, availableSlots));
 
             newFiles.forEach(file => {
                 selectedFiles.push(file);
-                renderPreview(file);
+                renderNewFilePreview(file);
             });
 
             // Reset input so same file can be selected again if removed
             input.value = '';
         }
 
-        function renderPreview(file) {
+        function renderNewFilePreview(file) {
             const container = document.getElementById('imagePreviewContainer');
             const reader = new FileReader();
 
             reader.onload = function (e) {
                 const previewItem = document.createElement('div');
                 previewItem.className = 'preview-item';
-                previewItem.dataset.name = file.name;
+                previewItem.dataset.id = `file-${file.name}-${file.lastModified}`;
 
                 previewItem.innerHTML = `
                     <img src="${e.target.result}" alt="Preview">
-                    <button type="button" class="remove-btn" onclick="removeSelectedImage('${file.name}')">✕</button>
+                    <button type="button" class="remove-btn" onclick="removeNewFile('${file.name}', ${file.lastModified})">✕</button>
                 `;
                 container.appendChild(previewItem);
             }
             reader.readAsDataURL(file);
         }
 
-        function removeSelectedImage(fileName) {
-            selectedFiles = selectedFiles.filter(f => f.name !== fileName);
+        function renderExistingImagePreview(url) {
             const container = document.getElementById('imagePreviewContainer');
-            const items = container.querySelectorAll('.preview-item');
-            items.forEach(item => {
-                if (item.dataset.name === fileName) {
-                    item.remove();
-                }
-            });
+            const previewItem = document.createElement('div');
+            previewItem.className = 'preview-item';
+            previewItem.dataset.url = url;
+
+            previewItem.innerHTML = `
+                <img src="${url}" alt="Existing">
+                <button type="button" class="remove-btn" onclick="removeExistingImage('${url}')">✕</button>
+            `;
+            container.appendChild(previewItem);
+        }
+
+        function removeNewFile(name, lastModified) {
+            selectedFiles = selectedFiles.filter(f => f.name !== name || f.lastModified !== lastModified);
+            const id = `file-${name}-${lastModified}`;
+            const item = document.querySelector(`.preview-item[data-id="${id}"]`);
+            if (item) item.remove();
+        }
+
+        function removeExistingImage(url) {
+            preservedImages = preservedImages.filter(u => u !== url);
+            const item = document.querySelector(`.preview-item[data-url="${url}"]`);
+            if (item) item.remove();
         }
 
         async function init() {
@@ -132,6 +149,11 @@
             if (post) {
                 document.getElementById('title').value = post.title;
                 document.getElementById('content').value = post.content;
+
+                // Load existing images
+                if (post.imageUrl) { preservedImages.push(post.imageUrl); renderExistingImagePreview(post.imageUrl); }
+                if (post.imageUrl2) { preservedImages.push(post.imageUrl2); renderExistingImagePreview(post.imageUrl2); }
+                if (post.imageUrl3) { preservedImages.push(post.imageUrl3); renderExistingImagePreview(post.imageUrl3); }
             }
         }
 
@@ -143,11 +165,10 @@
 
             try {
                 if (isEditMode) {
-                    await updatePost(postId, title, content);
+                    await updatePostCustom(postId, title, content, preservedImages, selectedFiles);
                     showSuccess('게시글이 수정되었습니다');
                     window.location.href = `/post-detail.html?id=${postId}`;
                 } else {
-                    // Pass array of files
                     const result = await createPostCustom(title, content, '', selectedFiles);
                     showSuccess('게시글이 작성되었습니다');
                     window.location.href = `/post-detail.html?id=${result.id}`;
@@ -157,7 +178,6 @@
             }
         });
 
-        // Custom createPost function to handle multiple images
         async function createPostCustom(title, content, password, files) {
             const formData = new FormData();
             formData.append('post', new Blob([JSON.stringify({ title, content, password })], {
@@ -178,6 +198,33 @@
             });
 
             if (!response.ok) throw new Error('Create failed');
+            return response.json();
+        }
+
+        async function updatePostCustom(id, title, content, preservedImages, newFiles) {
+            const formData = new FormData();
+            formData.append('post', new Blob([JSON.stringify({
+                title,
+                content,
+                preservedImages: preservedImages
+            })], {
+                type: 'application/json'
+            }));
+
+            newFiles.forEach(file => {
+                formData.append('images', file);
+            });
+
+            const token = localStorage.getItem('token');
+            const response = await fetch(`/api/posts/${id}`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                },
+                body: formData
+            });
+
+            if (!response.ok) throw new Error('Update failed');
             return response.json();
         }
 

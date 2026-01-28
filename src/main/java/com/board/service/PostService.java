@@ -126,7 +126,7 @@ public class PostService {
     }
 
     @Transactional
-    public PostResponse updatePost(Long id, PostRequest request, User author) {
+    public PostResponse updatePost(Long id, PostRequest request, List<MultipartFile> images, User author) {
         Post post = postRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("게시글을 찾을 수 없습니다"));
 
@@ -136,6 +136,41 @@ public class PostService {
 
         post.setTitle(request.getTitle());
         post.setContent(request.getContent());
+
+        // Handle Images
+        java.util.List<String> finalImagePaths = new java.util.ArrayList<>();
+
+        // 1. Add preserved images
+        if (request.getPreservedImages() != null) {
+            for (String url : request.getPreservedImages()) {
+                if (url != null && !url.isEmpty() && finalImagePaths.size() < 3) {
+                    finalImagePaths.add(url);
+                }
+            }
+        }
+
+        // 2. Add new images
+        if (images != null && !images.isEmpty()) {
+            for (int i = 0; i < images.size(); i++) {
+                if (finalImagePaths.size() >= 3)
+                    break;
+
+                MultipartFile image = images.get(i);
+                if (image != null && !image.isEmpty()) {
+                    try {
+                        String path = fileService.saveFile(image);
+                        finalImagePaths.add(path);
+                    } catch (IOException e) {
+                        throw new RuntimeException("이미지 업로드 중 오류가 발생했습니다.", e);
+                    }
+                }
+            }
+        }
+
+        // 3. Update entity fields (nullify remaining slots)
+        post.setImageUrl(finalImagePaths.size() > 0 ? finalImagePaths.get(0) : null);
+        post.setImageUrl2(finalImagePaths.size() > 1 ? finalImagePaths.get(1) : null);
+        post.setImageUrl3(finalImagePaths.size() > 2 ? finalImagePaths.get(2) : null);
 
         return convertToResponse(post);
     }
