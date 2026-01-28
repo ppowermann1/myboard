@@ -80,6 +80,7 @@ public class AuthController {
             Map<String, Object> response = new HashMap<>();
             response.put("username", user.getUsername());
             response.put("nickname", user.getNickname());
+            response.put("role", user.getRole().name());
             return ResponseEntity.ok(response);
         }
         return ResponseEntity.status(401).build();

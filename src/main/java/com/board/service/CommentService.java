@@ -4,6 +4,7 @@ import com.board.dto.CommentRequest;
 import com.board.dto.CommentResponse;
 import com.board.entity.Comment;
 import com.board.entity.Post;
+import com.board.entity.Role;
 import com.board.entity.User;
 import com.board.repository.CommentRepository;
 import com.board.repository.PostRepository;
@@ -49,7 +50,7 @@ public class CommentService {
         Comment comment = commentRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("댓글을 찾을 수 없습니다"));
 
-        if (!comment.getAuthor().getId().equals(author.getId())) {
+        if (!comment.getAuthor().getId().equals(author.getId()) && author.getRole() != Role.ADMIN) {
             throw new IllegalArgumentException("삭제 권한이 없습니다");
         }
 
@@ -60,6 +61,8 @@ public class CommentService {
         return CommentResponse.builder()
                 .id(comment.getId())
                 .content(comment.getContent())
+                .authorUsername(comment.getAuthor().getUsername())
+                .authorNickname(comment.getAuthor().getNickname())
                 .createdAt(comment.getCreatedAt())
                 .build();
     }

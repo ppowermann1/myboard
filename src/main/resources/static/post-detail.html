@@ -119,8 +119,14 @@
             `;
 
             // Show action buttons only if current user is the author
-            if (currentUser && post.authorUsername === currentUser.username) {
+            // Show action buttons only if current user is the author or an admin
+            if (currentUser && (post.authorUsername === currentUser.username || currentUser.role === 'ADMIN')) {
                 document.getElementById('postActions').classList.remove('hidden');
+
+                // If admin but NOT author, hide edit button (only allow delete)
+                if (currentUser.role === 'ADMIN' && post.authorUsername !== currentUser.username) {
+                    document.getElementById('editBtn').classList.add('hidden');
+                }
             }
         }
 
@@ -136,14 +142,25 @@
 
             container.innerHTML = comments.map(comment => {
                 const emoji = getRandomEmoji();
+                const isAdmin = currentUser && currentUser.role === 'ADMIN';
+                const isAuthor = currentUser && comment.authorUsername === currentUser.username;
+                const canDelete = isAuthor || isAdmin;
+
                 return `
                     <div class="comment">
                         <div class="comment-header">
-                            <div class="avatar">${emoji}</div>
-                            <div class="card-author">
-                                <div class="author-name">익명</div>
-                                <div class="post-date">${formatDate(comment.createdAt)}</div>
+                            <div class="comment-author-info">
+                                <div class="avatar">${emoji}</div>
+                                <div class="card-author">
+                                    <div class="author-name">${escapeHtml(comment.authorNickname || '익명')}</div>
+                                    <div class="post-date">${formatDate(comment.createdAt)}</div>
+                                </div>
                             </div>
+                            ${canDelete ? `
+                                <button type="button" class="btn-delete-comment" onclick="handleDeleteComment(${comment.id})">
+                                    <i class="fas fa-trash-alt"></i> 삭제
+                                </button>
+                            ` : ''}
                         </div>
                         <div class="comment-content">${escapeHtml(comment.content)}</div>
                     </div>
@@ -187,6 +204,32 @@
                 }
             }
         });
+
+        async function handleDeleteComment(commentId) {
+            if (confirm('댓글을 삭제하시겠습니까?')) {
+                try {
+                    const token = localStorage.getItem('token');
+                    const response = await fetch(`/api/comments/${commentId}`, {
+                        method: 'DELETE',
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        }
+                    });
+
+                    if (response.ok) {
+                        showSuccess('댓글이 삭제되었습니다');
+                        await loadComments();
+                    } else {
+                        throw new Error('Delete failed');
+                    }
+                } catch (error) {
+                    showError('댓글 삭제에 실패했습니다');
+                }
+            }
+        }
+
+        // Expose handleDeleteComment to global scope for onclick
+        window.handleDeleteComment = handleDeleteComment;
 
         // Lightbox Functions
         function setupLightbox() {

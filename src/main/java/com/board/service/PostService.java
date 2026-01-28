@@ -3,6 +3,7 @@ package com.board.service;
 import com.board.dto.PostRequest;
 import com.board.dto.PostResponse;
 import com.board.entity.Post;
+import com.board.entity.Role;
 import com.board.entity.User;
 import com.board.repository.PostRepository;
 import lombok.RequiredArgsConstructor;
@@ -144,7 +145,7 @@ public class PostService {
         Post post = postRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("게시글을 찾을 수 없습니다"));
 
-        if (!post.getAuthor().getId().equals(author.getId())) {
+        if (!post.getAuthor().getId().equals(author.getId()) && author.getRole() != Role.ADMIN) {
             throw new IllegalArgumentException("삭제 권한이 없습니다");
         }
 
