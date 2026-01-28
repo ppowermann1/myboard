@@ -13,18 +13,24 @@
     <header class="header">
         <div class="header-content">
             <a href="/" class="logo">
-                <img src="/images/logo.png" alt="OFF THE RECORD" class="logo-icon">
                 OFF THE RECORD
             </a>
             <div class="nav">
                 <span id="userInfo" class="user-info"></span>
-                <a href="/post-form.html" class="btn btn-primary btn-compact">글쓰기</a>
-                <button id="logoutBtn" class="btn btn-secondary btn-compact">로그아웃</button>
+                <button id="logoutBtn" class="btn btn-secondary btn-compact" aria-label="로그아웃">
+                    <i class="fas fa-lock-open"></i>
+                </button>
             </div>
         </div>
     </header>
 
     <div class="container">
+        <!-- Board Tabs -->
+        <div class="board-tabs">
+            <button class="board-tab active" onclick="switchBoard('free')">자유게시판</button>
+            <button class="board-tab" onclick="switchBoard('qna')">Q&A게시판</button>
+        </div>
+
         <div id="postsContainer" class="mobile-post-list">
             <div class="loading">게시글을 불러오는 중...</div>
         </div>
@@ -60,11 +66,19 @@
             </div>
         </div>
     </div>
+    </div>
+    </div>
+
+    <!-- Floating Write Button -->
+    <button class="floating-write-btn" onclick="goToWritePage()" aria-label="글쓰기">
+        <i class="fas fa-pen"></i>
+    </button>
 
     <script src="/js/app.js"></script>
     <script>
         let currentUser = null;
         let currentPage = 0;
+        let currentBoardId = 'free';
         let currentSearchType = '';
         let currentKeyword = '';
         const pageSize = 15;
@@ -119,6 +133,20 @@
             document.getElementById('searchToggleBtn').classList.remove('active');
         }
 
+        async function switchBoard(boardId) {
+            currentBoardId = boardId;
+            currentKeyword = '';
+            currentSearchType = '';
+            document.getElementById('searchKeyword').value = '';
+
+            // Update UI
+            document.querySelectorAll('.board-tab').forEach(tab => {
+                tab.classList.toggle('active', tab.getAttribute('onclick').includes(`'${boardId}'`));
+            });
+
+            await loadPosts(0);
+        }
+
         async function performSearch() {
             const searchType = document.getElementById('searchType').value;
             const keyword = document.getElementById('searchKeyword').value.trim();
@@ -151,9 +179,9 @@
             try {
                 let url;
                 if (currentKeyword) {
-                    url = `/api/posts/search?searchType=${currentSearchType}&keyword=${encodeURIComponent(currentKeyword)}&page=${page}&size=${pageSize}`;
+                    url = `/api/posts/search?boardId=${currentBoardId}&searchType=${currentSearchType}&keyword=${encodeURIComponent(currentKeyword)}&page=${page}&size=${pageSize}`;
                 } else {
-                    url = `/api/posts?page=${page}&size=${pageSize}`;
+                    url = `/api/posts?boardId=${currentBoardId}&page=${page}&size=${pageSize}`;
                 }
 
                 const response = await fetch(url, {
@@ -274,6 +302,10 @@
                 .replace(/'/g, '&#039;');
         }
 
+
+        function goToWritePage() {
+            window.location.href = `/post-form.html?boardId=${currentBoardId}`;
+        }
 
         document.getElementById('logoutBtn').addEventListener('click', logout);
         init();

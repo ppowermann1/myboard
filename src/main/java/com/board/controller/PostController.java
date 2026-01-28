@@ -26,18 +26,20 @@ public class PostController {
 
     @GetMapping
     public ResponseEntity<?> getAllPosts(
+            @RequestParam(defaultValue = "free") String boardId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "15") int size) {
-        return ResponseEntity.ok(postService.getAllPosts(page, size));
+        return ResponseEntity.ok(postService.getAllPosts(boardId, page, size));
     }
 
     @GetMapping("/search")
     public ResponseEntity<?> searchPosts(
+            @RequestParam(defaultValue = "free") String boardId,
             @RequestParam String searchType,
             @RequestParam String keyword,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "15") int size) {
-        return ResponseEntity.ok(postService.searchPosts(searchType, keyword, page, size));
+        return ResponseEntity.ok(postService.searchPosts(boardId, searchType, keyword, page, size));
     }
 
     @GetMapping("/{id}")

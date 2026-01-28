@@ -14,17 +14,22 @@ import java.util.List;
 public interface PostRepository extends JpaRepository<Post, Long> {
     List<Post> findAllByOrderByCreatedAtDesc();
 
+    // 게시판별 목록 조회
+    Page<Post> findAllByBoardIdOrderByCreatedAtDesc(String boardId, Pageable pageable);
+
     // 제목 검색
-    Page<Post> findByTitleContainingIgnoreCase(String keyword, Pageable pageable);
+    Page<Post> findByBoardIdAndTitleContainingIgnoreCase(String boardId, String keyword, Pageable pageable);
 
     // 내용 검색
-    Page<Post> findByContentContainingIgnoreCase(String keyword, Pageable pageable);
+    Page<Post> findByBoardIdAndContentContainingIgnoreCase(String boardId, String keyword, Pageable pageable);
 
     // 제목 + 내용 검색
-    @Query("SELECT p FROM Post p WHERE LOWER(p.title) LIKE LOWER(CONCAT('%', :keyword, '%')) OR LOWER(p.content) LIKE LOWER(CONCAT('%', :keyword, '%'))")
-    Page<Post> findByTitleOrContentContaining(@Param("keyword") String keyword, Pageable pageable);
+    @Query("SELECT p FROM Post p WHERE p.boardId = :boardId AND (LOWER(p.title) LIKE LOWER(CONCAT('%', :keyword, '%')) OR LOWER(p.content) LIKE LOWER(CONCAT('%', :keyword, '%')))")
+    Page<Post> findByBoardIdAndTitleOrContentContaining(@Param("boardId") String boardId,
+            @Param("keyword") String keyword, Pageable pageable);
 
     // 작성자 검색 (username 또는 nickname 기준)
-    @Query("SELECT p FROM Post p WHERE LOWER(p.author.username) LIKE LOWER(CONCAT('%', :keyword, '%')) OR LOWER(p.author.nickname) LIKE LOWER(CONCAT('%', :keyword, '%'))")
-    Page<Post> findByAuthorUsernameContaining(@Param("keyword") String keyword, Pageable pageable);
+    @Query("SELECT p FROM Post p WHERE p.boardId = :boardId AND (LOWER(p.author.username) LIKE LOWER(CONCAT('%', :keyword, '%')) OR LOWER(p.author.nickname) LIKE LOWER(CONCAT('%', :keyword, '%')))")
+    Page<Post> findByBoardIdAndAuthorUsernameContaining(@Param("boardId") String boardId,
+            @Param("keyword") String keyword, Pageable pageable);
 }

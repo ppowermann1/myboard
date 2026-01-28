@@ -12,7 +12,6 @@
     <header class="header">
         <div class="header-content">
             <a href="/" class="logo">
-                <img src="/images/logo.png" alt="OFF THE RECORD" class="logo-icon">
                 OFF THE RECORD
             </a>
             <div class="nav">
@@ -64,6 +63,7 @@
     <script>
         const urlParams = new URLSearchParams(window.location.search);
         const postId = urlParams.get('id');
+        const boardId = urlParams.get('boardId') || 'free';
         let isEditMode = false;
         let selectedFiles = []; // Array to store New Selected File objects
         let preservedImages = []; // Array to store Existing image URLs to keep
@@ -169,7 +169,7 @@
                     showSuccess('게시글이 수정되었습니다');
                     window.location.href = `/post-detail.html?id=${postId}`;
                 } else {
-                    const result = await createPostCustom(title, content, '', selectedFiles);
+                    const result = await createPostCustom(title, content, '', selectedFiles, boardId);
                     showSuccess('게시글이 작성되었습니다');
                     window.location.href = `/post-detail.html?id=${result.id}`;
                 }
@@ -178,9 +178,9 @@
             }
         });
 
-        async function createPostCustom(title, content, password, files) {
+        async function createPostCustom(title, content, password, files, boardId) {
             const formData = new FormData();
-            formData.append('post', new Blob([JSON.stringify({ title, content, password })], {
+            formData.append('post', new Blob([JSON.stringify({ title, content, password, boardId })], {
                 type: 'application/json'
             }));
 

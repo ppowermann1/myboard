@@ -13,6 +13,7 @@ import java.time.LocalDateTime;
 @Builder
 public class PostResponse {
     private Long id;
+    private String boardId;
     private String title;
     private String content;
     private String authorUsername;

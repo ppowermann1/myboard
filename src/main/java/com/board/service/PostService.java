@@ -29,9 +29,9 @@ public class PostService {
     private final PostRepository postRepository;
     private final FileService fileService;
 
-    public Map<String, Object> getAllPosts(int page, int size) {
+    public Map<String, Object> getAllPosts(String boardId, int page, int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
-        Page<Post> postPage = postRepository.findAll(pageable);
+        Page<Post> postPage = postRepository.findAllByBoardIdOrderByCreatedAtDesc(boardId, pageable);
 
         List<PostResponse> posts = postPage.getContent().stream()
                 .map(this::convertToResponse)
@@ -46,25 +46,25 @@ public class PostService {
         return response;
     }
 
-    public Map<String, Object> searchPosts(String searchType, String keyword, int page, int size) {
+    public Map<String, Object> searchPosts(String boardId, String searchType, String keyword, int page, int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
         Page<Post> postPage;
 
         switch (searchType) {
             case "title":
-                postPage = postRepository.findByTitleContainingIgnoreCase(keyword, pageable);
+                postPage = postRepository.findByBoardIdAndTitleContainingIgnoreCase(boardId, keyword, pageable);
                 break;
             case "content":
-                postPage = postRepository.findByContentContainingIgnoreCase(keyword, pageable);
+                postPage = postRepository.findByBoardIdAndContentContainingIgnoreCase(boardId, keyword, pageable);
                 break;
             case "title_content":
-                postPage = postRepository.findByTitleOrContentContaining(keyword, pageable);
+                postPage = postRepository.findByBoardIdAndTitleOrContentContaining(boardId, keyword, pageable);
                 break;
             case "author":
-                postPage = postRepository.findByAuthorUsernameContaining(keyword, pageable);
+                postPage = postRepository.findByBoardIdAndAuthorUsernameContaining(boardId, keyword, pageable);
                 break;
             default:
-                postPage = postRepository.findByTitleOrContentContaining(keyword, pageable);
+                postPage = postRepository.findByBoardIdAndTitleOrContentContaining(boardId, keyword, pageable);
         }
 
         List<PostResponse> posts = postPage.getContent().stream()
@@ -113,6 +113,7 @@ public class PostService {
 
         Post post = Post.builder()
                 .title(request.getTitle())
+                .boardId(request.getBoardId() != null ? request.getBoardId() : "free")
                 .content(request.getContent())
                 .author(author)
                 .password(request.getPassword())
@@ -190,6 +191,7 @@ public class PostService {
     private PostResponse convertToResponse(Post post) {
         return PostResponse.builder()
                 .id(post.getId())
+                .boardId(post.getBoardId())
                 .title(post.getTitle())
                 .content(post.getContent())
                 .authorUsername(post.getAuthor().getUsername())

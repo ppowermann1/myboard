@@ -13,7 +13,6 @@
     <header class="header">
         <div class="header-content">
             <a href="/" class="logo">
-                <img src="/images/logo.png" alt="OFF THE RECORD" class="logo-icon">
                 OFF THE RECORD
             </a>
             <nav class="nav">
@@ -28,11 +27,6 @@
                 <div class="loading">게시글을 불러오는 중...</div>
             </div>
 
-            <div id="postActions" class="post-actions hidden">
-                <button id="editBtn" class="btn btn-primary">수정</button>
-                <button id="deleteBtn" class="btn btn-danger">삭제</button>
-            </div>
-
             <div class="comments-section">
                 <h2 class="comments-title">댓글 <span id="commentCount">0</span></h2>
 
@@ -40,7 +34,10 @@
                     <div class="form-group">
                         <textarea id="commentContent" class="form-textarea" placeholder="댓글을 입력하세요" required></textarea>
                     </div>
-                    <button type="submit" class="btn btn-primary">댓글 작성</button>
+                    <div style="display: flex; justify-content: flex-end;">
+                        <button type="submit" class="icon-btn primary" aria-label="댓글 작성"><i
+                                class="fas fa-paper-plane"></i></button>
+                    </div>
                 </form>
 
                 <div id="commentsContainer" class="mt-lg">
@@ -97,6 +94,11 @@
             const emoji = getRandomEmoji();
             const authorName = post.authorNickname || post.authorUsername || '익명';
 
+            // Check permissions
+            const isOwner = currentUser && post.authorUsername === currentUser.username;
+            const isAdmin = currentUser && currentUser.role === 'ADMIN';
+            const showActions = isOwner || isAdmin;
+
             document.getElementById('postContent').innerHTML = `
                 <div class="post-detail-header">
                     <div class="avatar">${emoji}</div>
@@ -107,6 +109,18 @@
                     `<span class="post-author">${post.authorNickname}</span>`
                 }
                             <span class="view-count-detail"><i class="fas fa-eye"></i> ${formatNumber(post.viewCount)}</span>
+                            
+                            ${showActions ? `
+                            <div class="post-actions">
+                                ${isOwner ? `
+                                <button class="icon-btn primary" onclick="goToEditPage()" aria-label="수정" style="width: 38px; height: 38px; font-size: 16px;">
+                                    <i class="fas fa-pen"></i>
+                                </button>` : ''}
+                                <button class="icon-btn danger" onclick="handleDeletePost()" aria-label="삭제" style="width: 38px; height: 38px; font-size: 16px;">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                            ` : ''}
                         </div>
                         <div class="post-date">${formatDate(post.createdAt)}</div>
                     </div>
@@ -118,22 +132,7 @@
                     ${post.imageUrl3 ? `<img src="${post.imageUrl3}" alt="Post Image 3" onclick="openLightbox('${post.imageUrl3}')">` : ''}
                 </div>
                 <div class="post-detail-content">${escapeHtml(post.content)}</div>
-                <div class="card-footer">
-                    <span><i class="fas fa-eye"></i> ${formatNumber(post.viewCount)}</span>
-                    <span><i class="fas fa-comment-dots"></i> ${formatNumber(post.commentCount)}</span>
-                </div>
             `;
-
-            // Show action buttons only if current user is the author
-            // Show action buttons only if current user is the author or an admin
-            if (currentUser && (post.authorUsername === currentUser.username || currentUser.role === 'ADMIN')) {
-                document.getElementById('postActions').classList.remove('hidden');
-
-                // If admin but NOT author, hide edit button (only allow delete)
-                if (currentUser.role === 'ADMIN' && post.authorUsername !== currentUser.username) {
-                    document.getElementById('editBtn').classList.add('hidden');
-                }
-            }
         }
 
         async function loadComments() {
@@ -216,11 +215,11 @@
             }
         });
 
-        document.getElementById('editBtn').addEventListener('click', () => {
+        function goToEditPage() {
             window.location.href = `/post-form.html?id=${postId}`;
-        });
+        }
 
-        document.getElementById('deleteBtn').addEventListener('click', async () => {
+        async function handleDeletePost() {
             if (confirm('정말 삭제하시겠습니까?')) {
                 const success = await deletePost(postId);
                 if (success) {
@@ -230,7 +229,10 @@
                     showError('게시글 삭제에 실패했습니다');
                 }
             }
-        });
+        }
+
+        window.goToEditPage = goToEditPage;
+        window.handleDeletePost = handleDeletePost;
 
         async function handleDeleteComment(commentId) {
             if (confirm('댓글을 삭제하시겠습니까?')) {

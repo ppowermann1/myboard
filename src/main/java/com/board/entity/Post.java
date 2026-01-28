@@ -26,6 +26,10 @@ public class Post {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(nullable = false, length = 50)
+    @Builder.Default
+    private String boardId = "free";
+
     @NotBlank
     @Size(max = 200)
     @Column(nullable = false, length = 200)
