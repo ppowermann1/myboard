@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>게시글 상세 - OFF THE RECORD</title>
+    <link rel="stylesheet" href="/css/style.css?v=3">
+</head>
+
+<body>
+    <header class="header">
+        <div class="header-content">
+            <a href="/" class="logo">
+                <img src="/images/logo.png" alt="OFF THE RECORD" class="logo-icon">
+                OFF THE RECORD
+            </a>
+            <nav class="nav">
+                <a href="/" class="btn btn-secondary">목록으로</a>
+            </nav>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="post-detail">
+            <div id="postContent">
+                <div class="loading">게시글을 불러오는 중...</div>
+            </div>
+
+            <div id="postActions" class="post-actions hidden">
+                <button id="editBtn" class="btn btn-primary">수정</button>
+                <button id="deleteBtn" class="btn btn-danger">삭제</button>
+            </div>
+
+            <div class="comments-section">
+                <h2 class="comments-title">댓글 <span id="commentCount">0</span></h2>
+
+                <form id="commentForm" class="hidden">
+                    <div class="form-group">
+                        <textarea id="commentContent" class="form-textarea" placeholder="댓글을 입력하세요" required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">댓글 작성</button>
+                </form>
+
+                <div id="commentsContainer" class="mt-lg">
+                    <div class="loading">댓글을 불러오는 중...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/app.js"></script>
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const postId = urlParams.get('id');
+        let currentUser = null;
+        let currentPost = null;
+
+        async function init() {
+            if (!postId) {
+                window.location.href = '/';
+                return;
+            }
+
+            // Check authentication
+            currentUser = await getCurrentUser();
+            if (!currentUser) {
+                window.location.href = '/login.html';
+                return;
+            }
+
+            // Load post and comments
+            await loadPost();
+            await loadComments();
+
+            // Show comment form
+            document.getElementById('commentForm').classList.remove('hidden');
+        }
+
+        async function loadPost() {
+            const post = await getPost(postId);
+            if (!post) {
+                showError('게시글을 찾을 수 없습니다');
+                window.location.href = '/';
+                return;
+            }
+
+            currentPost = post;
+            const emoji = getRandomEmoji();
+            const authorName = post.authorNickname || post.authorUsername || '익명';
+
+            document.getElementById('postContent').innerHTML = `
+                <div class="post-detail-header">
+                    <div class="avatar">${emoji}</div>
+                    <div class="card-author">
+                        <div class="author-name">${escapeHtml(authorName)}</div>
+                        <div class="post-date">${formatDate(post.createdAt)}</div>
+                    </div>
+                </div>
+                <h1 class="post-detail-title">${escapeHtml(post.title)}</h1>
+                ${post.imageUrl ? `<div class="post-detail-image"><img src="${post.imageUrl}" alt="Post Image"></div>` : ''}
+                <div class="post-detail-content">${escapeHtml(post.content)}</div>
+                <div class="card-footer">
+                    <span>👁️ 조회수 ${post.viewCount}</span>
+                    <span>💬 댓글 ${post.commentCount}</span>
+                </div>
+            `;
+
+            // Show action buttons only if current user is the author
+            if (currentUser && post.authorUsername === currentUser.username) {
+                document.getElementById('postActions').classList.remove('hidden');
+            }
+        }
+
+        async function loadComments() {
+            const comments = await getComments(postId);
+            const container = document.getElementById('commentsContainer');
+            document.getElementById('commentCount').textContent = comments.length;
+
+            if (comments.length === 0) {
+                container.innerHTML = '<div class="empty-state">아직 댓글이 없습니다</div>';
+                return;
+            }
+
+            container.innerHTML = comments.map(comment => {
+                const emoji = getRandomEmoji();
+                return `
+                    <div class="comment">
+                        <div class="comment-header">
+                            <div class="avatar">${emoji}</div>
+                            <div class="card-author">
+                                <div class="author-name">익명</div>
+                                <div class="post-date">${formatDate(comment.createdAt)}</div>
+                            </div>
+                        </div>
+                        <div class="comment-content">${escapeHtml(comment.content)}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        document.getElementById('commentForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const content = document.getElementById('commentContent').value;
+
+            try {
+                await createComment(postId, content);
+                document.getElementById('commentContent').value = '';
+                await loadComments();
+                showSuccess('댓글이 작성되었습니다');
+            } catch (error) {
+                showError('댓글 작성에 실패했습니다');
+            }
+        });
+
+        document.getElementById('editBtn').addEventListener('click', () => {
+            window.location.href = `/post-form.html?id=${postId}`;
+        });
+
+        document.getElementById('deleteBtn').addEventListener('click', async () => {
+            if (confirm('정말 삭제하시겠습니까?')) {
+                const success = await deletePost(postId);
+                if (success) {
+                    showSuccess('게시글이 삭제되었습니다');
+                    window.location.href = '/';
+                } else {
+                    showError('게시글 삭제에 실패했습니다');
+                }
+            }
+        });
+
+        init();
+    </script>
+</body>
+
+</html>

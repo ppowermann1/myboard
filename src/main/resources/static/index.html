@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OFF THE RECORD</title>
+    <link rel="stylesheet" href="/css/style.css?v=3">
+</head>
+
+<body>
+    <header class="header">
+        <div class="header-content">
+            <a href="/" class="logo">
+                <img src="/images/logo.png" alt="OFF THE RECORD" class="logo-icon">
+                OFF THE RECORD
+            </a>
+            <div class="nav">
+                <span id="userInfo" class="user-info"></span>
+                <a href="/post-form.html" class="btn btn-primary btn-compact">글쓰기</a>
+                <button id="logoutBtn" class="btn btn-secondary btn-compact">로그아웃</button>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <div id="postsContainer" class="mobile-post-list">
+            <div class="loading">게시글을 불러오는 중...</div>
+        </div>
+
+        <div id="emptyState" class="empty-state hidden">
+            <h2>검색 결과가 없습니다</h2>
+            <p>다른 검색어로 시도해보세요</p>
+        </div>
+
+        <div id="pagination" class="pagination hidden"></div>
+
+        <!-- 검색 토글 버튼 (하단 고정) -->
+        <button id="searchToggleBtn" class="search-toggle-btn" aria-label="검색">
+            🔍
+        </button>
+
+        <!-- 검색 영역 (기본 숨김) -->
+        <div id="searchContainer" class="search-container-bottom hidden">
+            <div class="search-header">
+                <h3>검색</h3>
+                <button id="closeSearchBtn" class="close-search-btn">✕</button>
+            </div>
+            <select id="searchType" class="search-select">
+                <option value="title_content">제목+내용</option>
+                <option value="title">제목</option>
+                <option value="content">내용</option>
+                <option value="author">작성자</option>
+            </select>
+            <input type="text" id="searchKeyword" class="search-input" placeholder="검색어를 입력하세요" />
+            <div class="search-buttons">
+                <button id="searchBtn" class="btn btn-primary">검색</button>
+                <button id="resetBtn" class="btn btn-secondary">전체보기</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/app.js"></script>
+    <script>
+        let currentUser = null;
+        let currentPage = 0;
+        let currentSearchType = '';
+        let currentKeyword = '';
+        const pageSize = 15;
+
+        async function init() {
+            // Check authentication
+            currentUser = await getCurrentUser();
+            if (!currentUser) {
+                window.location.href = '/login.html';
+                return;
+            }
+
+            // Update user info
+            document.getElementById('userInfo').textContent = currentUser.nickname;
+
+            // Load posts
+            await loadPosts(0);
+
+            // Setup search toggle
+            document.getElementById('searchToggleBtn').addEventListener('click', toggleSearch);
+            document.getElementById('closeSearchBtn').addEventListener('click', closeSearch);
+
+            // Setup search
+            document.getElementById('searchBtn').addEventListener('click', performSearch);
+            document.getElementById('searchKeyword').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    performSearch();
+                }
+            });
+            document.getElementById('resetBtn').addEventListener('click', resetSearch);
+        }
+
+        function toggleSearch() {
+            const searchContainer = document.getElementById('searchContainer');
+            const toggleBtn = document.getElementById('searchToggleBtn');
+
+            if (searchContainer.classList.contains('hidden')) {
+                searchContainer.classList.remove('hidden');
+                toggleBtn.classList.add('active');
+            } else {
+                searchContainer.classList.add('hidden');
+                toggleBtn.classList.remove('active');
+            }
+        }
+
+        function closeSearch() {
+            document.getElementById('searchContainer').classList.add('hidden');
+            document.getElementById('searchToggleBtn').classList.remove('active');
+        }
+
+        async function performSearch() {
+            const searchType = document.getElementById('searchType').value;
+            const keyword = document.getElementById('searchKeyword').value.trim();
+
+            if (!keyword) {
+                showError('검색어를 입력하세요');
+                return;
+            }
+
+            currentSearchType = searchType;
+            currentKeyword = keyword;
+            closeSearch();
+            await loadPosts(0);
+        }
+
+        async function resetSearch() {
+            currentSearchType = '';
+            currentKeyword = '';
+            document.getElementById('searchKeyword').value = '';
+            document.getElementById('searchType').value = 'title_content';
+            closeSearch();
+            await loadPosts(0);
+        }
+
+        async function loadPosts(page) {
+            const container = document.getElementById('postsContainer');
+            const emptyState = document.getElementById('emptyState');
+            const pagination = document.getElementById('pagination');
+
+            try {
+                let url;
+                if (currentKeyword) {
+                    url = `/api/posts/search?searchType=${currentSearchType}&keyword=${encodeURIComponent(currentKeyword)}&page=${page}&size=${pageSize}`;
+                } else {
+                    url = `/api/posts?page=${page}&size=${pageSize}`;
+                }
+
+                const response = await fetch(url, {
+                    credentials: 'include'
+                });
+                const data = await response.json();
+
+                if (data.posts.length === 0) {
+                    container.innerHTML = '';
+                    emptyState.classList.remove('hidden');
+                    pagination.classList.add('hidden');
+                    return;
+                }
+
+                emptyState.classList.add('hidden');
+                currentPage = data.currentPage;
+
+                // Render posts as mobile cards
+                container.innerHTML = data.posts.map(post => createMobilePostCard(post)).join('');
+
+                // Render pagination
+                renderPagination(data.currentPage, data.totalPages);
+            } catch (error) {
+                console.error('Error loading posts:', error);
+                showError('게시글을 불러오는 중 오류가 발생했습니다');
+            }
+        }
+
+        function createMobilePostCard(post) {
+            const date = formatDate(post.createdAt);
+            const emoji = getRandomEmoji();
+            const commentBadge = post.commentCount > 0 ? `<span class="mobile-comment-count">[${post.commentCount}]</span>` : '';
+            const authorName = post.authorNickname || post.authorUsername || '익명';
+
+            // Changed from simple thumbnail to expandable image container
+            const thumbnailHtml = post.imageUrl ? `
+                <div class="mobile-post-image-container" onclick="event.stopPropagation()">
+                    <img src="${post.imageUrl}" alt="thumbnail" onload="checkCardImageHeight(this)" onclick="location.href='/post-detail.html?id=${post.id}'" style="cursor: pointer;">
+                    <button class="expand-image-btn" onclick="toggleCardImage(event)">전체 보기</button>
+                </div>
+            ` : '';
+
+            return `
+                <div class="mobile-post-card" onclick="location.href='/post-detail.html?id=${post.id}'">
+                    <div class="mobile-post-header">
+                        <div class="mobile-post-avatar">${emoji}</div>
+                        <div class="mobile-post-meta">
+                            <span class="mobile-post-author">${escapeHtml(authorName)}</span>
+                            <span class="mobile-post-date">${date}</span>
+                        </div>
+                    </div>
+                    <div class="mobile-post-title">
+                        ${escapeHtml(post.title)}
+                        ${commentBadge}
+                    </div>
+                    ${thumbnailHtml}
+                    <div class="mobile-post-stats" style="margin-top: 8px; color: var(--text-muted); font-size: 12px;">
+                        <span>👁️ ${post.viewCount}</span>
+                        <span style="margin-left: 8px;">💬 ${post.commentCount}</span>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderPagination(currentPage, totalPages) {
+            const pagination = document.getElementById('pagination');
+
+            if (totalPages <= 1) {
+                pagination.classList.add('hidden');
+                return;
+            }
+
+            pagination.classList.remove('hidden');
+
+            const maxButtons = 5;
+            let startPage = Math.max(0, currentPage - Math.floor(maxButtons / 2));
+            let endPage = Math.min(totalPages - 1, startPage + maxButtons - 1);
+
+            if (endPage - startPage < maxButtons - 1) {
+                startPage = Math.max(0, endPage - maxButtons + 1);
+            }
+
+            let html = '';
+
+            // Previous button
+            if (currentPage > 0) {
+                html += `<button class="page-btn" onclick="loadPosts(${currentPage - 1})">이전</button>`;
+            }
+
+            // Page numbers
+            for (let i = startPage; i <= endPage; i++) {
+                const active = i === currentPage ? 'active' : '';
+                html += `<button class="page-btn ${active}" onclick="loadPosts(${i})">${i + 1}</button>`;
+            }
+
+            // Next button
+            if (currentPage < totalPages - 1) {
+                html += `<button class="page-btn" onclick="loadPosts(${currentPage + 1})">다음</button>`;
+            }
+
+            pagination.innerHTML = html;
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            return text.replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+        // Functions for Expandable Card Images
+        function checkCardImageHeight(img) {
+            const container = img.closest('.mobile-post-image-container');
+            const btn = container.querySelector('.expand-image-btn');
+
+            // If image is taller than 300px (thumbnail limit), show button
+            if (img.naturalHeight > 300 || img.offsetHeight > 300) {
+                container.classList.add('collapsed');
+                btn.style.display = 'block';
+            } else {
+                container.classList.remove('collapsed');
+                btn.style.display = 'none';
+            }
+        }
+
+        function toggleCardImage(e) {
+            e.stopPropagation(); // Prevent card click navigation
+            const btn = e.target;
+            const container = btn.closest('.mobile-post-image-container');
+
+            if (container.classList.contains('collapsed')) {
+                container.classList.remove('collapsed');
+                btn.textContent = '접기';
+            } else {
+                container.classList.add('collapsed');
+                btn.textContent = '전체 보기';
+            }
+        }
+
+
+        document.getElementById('logoutBtn').addEventListener('click', logout);
+        init();
+    </script>
+</body>
+
+</html>

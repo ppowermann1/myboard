@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>글쓰기 - OFF THE RECORD</title>
+    <link rel="stylesheet" href="/css/style.css?v=3">
+</head>
+
+<body>
+    <header class="header">
+        <div class="header-content">
+            <a href="/" class="logo">
+                <img src="/images/logo.png" alt="OFF THE RECORD" class="logo-icon">
+                OFF THE RECORD
+            </a>
+            <div class="nav">
+                <a href="/" class="btn btn-secondary">목록으로</a>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="form-container" style="margin: 50px auto;">
+            <h1 class="form-title" id="formTitle">게시글 작성</h1>
+            <form id="postForm">
+                <div class="form-group">
+                    <label class="form-label" for="title">제목</label>
+                    <input type="text" id="title" class="form-input" placeholder="제목을 입력하세요 (최대 200자)" required
+                        maxlength="200">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="content">내용</label>
+                    <textarea id="content" class="form-textarea" placeholder="내용을 입력하세요" required
+                        style="min-height: 300px;"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="image">이미지 첨부</label>
+                    <div class="image-upload-container">
+                        <input type="file" id="image" class="form-input" accept="image/*" onchange="previewImage(this)">
+                        <div id="imagePreview" class="image-preview hidden">
+                            <img id="previewImg" src="" alt="Preview">
+                            <button type="button" class="remove-image-btn" onclick="removeImage()">✕</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 16px;">
+                    <button type="submit" class="btn btn-primary" style="flex: 1;">
+                        저장
+                    </button>
+                    <button type="button" class="btn btn-secondary" onclick="history.back()">
+                        취소
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="/js/app.js"></script>
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const postId = urlParams.get('id');
+        let isEditMode = false;
+        let selectedImage = null;
+
+        function previewImage(input) {
+            if (input.files && input.files[0]) {
+                const file = input.files[0];
+                selectedImage = file;
+
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    document.getElementById('previewImg').src = e.target.result;
+                    document.getElementById('imagePreview').classList.remove('hidden');
+                }
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function removeImage() {
+            document.getElementById('image').value = '';
+            document.getElementById('imagePreview').classList.add('hidden');
+            selectedImage = null;
+        }
+
+        async function init() {
+            // Check authentication
+            const user = await getCurrentUser();
+            if (!user) {
+                window.location.href = '/login.html';
+                return;
+            }
+
+            // If editing, load post data
+            if (postId) {
+                isEditMode = true;
+                document.getElementById('formTitle').textContent = '게시글 수정';
+                await loadPost();
+            }
+        }
+
+        async function loadPost() {
+            const post = await getPost(postId);
+            if (post) {
+                document.getElementById('title').value = post.title;
+                document.getElementById('content').value = post.content;
+            }
+        }
+
+        document.getElementById('postForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const title = document.getElementById('title').value;
+            const content = document.getElementById('content').value;
+
+            try {
+                if (isEditMode) {
+                    await updatePost(postId, title, content);
+                    showSuccess('게시글이 수정되었습니다');
+                    window.location.href = `/post-detail.html?id=${postId}`;
+                } else {
+                    const result = await createPost(title, content, '', selectedImage);
+                    showSuccess('게시글이 작성되었습니다');
+                    window.location.href = `/post-detail.html?id=${result.id}`;
+                }
+            } catch (error) {
+                showError('게시글 저장에 실패했습니다');
+            }
+        });
+
+        init();
+    </script>
+</body>
+
+</html>

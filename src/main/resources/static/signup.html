@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>회원가입 - OFF THE RECORD</title>
+    <link rel="stylesheet" href="/css/style.css?v=3">
+</head>
+
+<body>
+    <div class="form-container">
+        <div style="text-align: center; margin-bottom: 24px;">
+            <a href="/" class="logo" style="justify-content: center;">
+                <img src="/images/logo.png" alt="OFF THE RECORD" class="logo-icon">
+                OFF THE RECORD
+            </a>
+        </div>
+        <h1 class="form-title">회원가입</h1>
+        <form id="signupForm">
+            <div class="form-group">
+                <label class="form-label" for="username">아이디</label>
+                <input type="text" id="username" class="form-input" placeholder="4-50자 사이의 아이디를 입력하세요" required
+                    minlength="4" maxlength="50">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="password">비밀번호</label>
+                <input type="password" id="password" class="form-input" placeholder="최소 6자 이상의 비밀번호를 입력하세요" required
+                    minlength="6">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="nickname">별명</label>
+                <input type="text" id="nickname" class="form-input" placeholder="2-50자 사이의 별명을 입력하세요" required
+                    minlength="2" maxlength="50">
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="width: 100%;">
+                회원가입
+            </button>
+        </form>
+
+        <div class="form-link">
+            이미 계정이 있으신가요? <a href="/login.html">로그인</a>
+        </div>
+    </div>
+
+    <script src="/js/app.js"></script>
+    <script>
+        document.getElementById('signupForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const nickname = document.getElementById('nickname').value;
+
+            const result = await signup(username, password, nickname);
+
+            if (result.success) {
+                showSuccess('회원가입이 완료되었습니다!');
+                window.location.href = '/login.html';
+            } else {
+                showError(result.message || '회원가입에 실패했습니다');
+            }
+        });
+    </script>
+</body>
+
+</html>
