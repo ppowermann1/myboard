@@ -930,25 +930,25 @@ body {
 }
 
 /* Mobile Post Image Container - Replaces old thumbnail */
+/* Mobile Post Image Container - Consistent fixed size */
 .mobile-post-image-container {
     position: relative;
     overflow: hidden;
     border-radius: var(--radius);
     margin: var(--spacing-sm) 0;
     width: 100%;
-    /* Default max-height for list view */
-    max-height: 800px;
-    /* Allow fairly tall, but cap it */
-    transition: max-height 0.3s ease;
+    height: 220px;
+    /* Fixed height for consistency */
+    transition: height 0.3s ease;
 }
 
-.mobile-post-image-container.collapsed {
-    max-height: 300px;
-    /* List view collapsed height */
+.mobile-post-image-container.expanded {
+    height: auto;
+    max-height: none;
 }
 
-/* Gradient for list view cards when collapsed */
-.mobile-post-image-container.collapsed::after {
+/* Gradient for list view cards when NOT expanded (default) */
+.mobile-post-image-container:not(.expanded)::after {
     content: '';
     position: absolute;
     bottom: 0;
@@ -962,16 +962,141 @@ body {
 .mobile-post-image-container img {
     display: block;
     width: 100%;
-    height: auto;
+    height: 100%;
+    /* Fill the fixed container */
     object-fit: cover;
-    /* Maintain aspect, fill width */
+    /* Crop to fit without distortion */
     border-radius: var(--radius);
     border: 1px solid var(--border-color);
 }
 
-/* Reuse expanded button styles but possibly smaller for list */
+.mobile-post-image-container.expanded img {
+    height: auto;
+    /* Allow full height when expanded */
+}
+
+/* Button positioning */
 .mobile-post-image-container .expand-image-btn {
     bottom: 12px;
     padding: 6px 16px;
     font-size: 13px;
+    display: none;
+    /* Hidden by default, shown via JS if needed */
+}
+
+/* Show button only if not expanded yet (or logic handled by JS) */
+
+/* Mobile Post Card - Dogdrip Style (Horizontal Layout) */
+.mobile-post-card {
+    display: flex;
+    /* Horizontal layout */
+    align-items: flex-start;
+    /* Align to top */
+    background-color: var(--bg-secondary);
+    border-radius: var(--radius);
+    padding: var(--spacing-sm);
+    box-shadow: var(--shadow-sm);
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    border: 1px solid var(--border-color);
+    height: 110px;
+    /* Fixed height for consistency */
+    overflow: hidden;
+}
+
+.mobile-post-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+/* Left side thumbnail area */
+.post-thumbnail-area {
+    width: 80px;
+    height: 80px;
+    flex-shrink: 0;
+    margin-right: 12px;
+    border-radius: 6px;
+    overflow: hidden;
+    background-color: var(--bg-tertiary);
+    /* Placeholder background */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--border-color);
+}
+
+.post-thumbnail-area img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+/* Placeholder icon styling */
+.post-thumbnail-placeholder {
+    color: var(--text-secondary);
+    font-size: 24px;
+    opacity: 0.5;
+}
+
+/* Right side content area */
+.post-content-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    height: 100%;
+    min-width: 0;
+    /* Prevent text overflow issues */
+}
+
+.mobile-post-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 4px;
+}
+
+.mobile-post-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0;
+    line-height: 1.4;
+
+    /* 2 lines max */
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.mobile-post-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-top: auto;
+    /* Push to bottom */
+}
+
+.post-meta-left span {
+    margin-right: 8px;
+}
+
+.post-meta-right span {
+    margin-left: 8px;
+}
+
+/* New badge style */
+.new-badge {
+    display: inline-block;
+    width: 4px;
+    height: 4px;
+    background-color: var(--accent-color);
+    border-radius: 50%;
+    margin-right: 6px;
+    vertical-align: middle;
 }

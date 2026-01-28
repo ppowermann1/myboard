@@ -203,11 +203,11 @@ async function deleteComment(id) {
 }
 
 // Utility Functions
-function formatDate(dateString) {
+// Helper Functions
+function formatTimeAgo(dateString) {
     const date = new Date(dateString);
     const now = new Date();
     const diff = now - date;
-
     const minutes = Math.floor(diff / 60000);
     const hours = Math.floor(diff / 3600000);
     const days = Math.floor(diff / 86400000);
@@ -217,7 +217,29 @@ function formatDate(dateString) {
     if (hours < 24) return `${hours}시간 전`;
     if (days < 7) return `${days}일 전`;
 
-    return date.toLocaleDateString('ko-KR');
+    return `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, '0')}.${String(date.getDate()).padStart(2, '0')}`;
+}
+
+function isNewPost(dateString) {
+    const date = new Date(dateString);
+    const now = new Date();
+    // Consider new if within 24 hours
+    return (now - date) < 86400000;
+}
+
+function formatNumber(num) {
+    if (num >= 10000) {
+        return (num / 10000).toFixed(1) + '만';
+    }
+    if (num >= 1000) {
+        return (num / 1000).toFixed(1) + '천';
+    }
+    return num.toString();
+}
+
+function formatDate(dateString) {
+    const date = new Date(dateString);
+    return `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, '0')}.${String(date.getDate()).padStart(2, '0')}`;
 }
 
 function showError(message) {

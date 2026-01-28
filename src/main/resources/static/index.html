@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>OFF THE RECORD</title>
-    <link rel="stylesheet" href="/css/style.css?v=3">
+    <link rel="stylesheet" href="/css/style.css?v=5">
 </head>
 
 <body>
@@ -178,36 +178,41 @@
         }
 
         function createMobilePostCard(post) {
-            const date = formatDate(post.createdAt);
-            const emoji = getRandomEmoji();
-            const commentBadge = post.commentCount > 0 ? `<span class="mobile-comment-count">[${post.commentCount}]</span>` : '';
-            const authorName = post.authorNickname || post.authorUsername || '익명';
+            const date = new Date(post.createdAt);
+            const timeString = formatTimeAgo(date); // Use time ago for list view
 
-            // Changed from simple thumbnail to expandable image container
-            const thumbnailHtml = post.imageUrl ? `
-                <div class="mobile-post-image-container" onclick="event.stopPropagation()">
-                    <img src="${post.imageUrl}" alt="thumbnail" onload="checkCardImageHeight(this)" onclick="location.href='/post-detail.html?id=${post.id}'" style="cursor: pointer;">
-                    <button class="expand-image-btn" onclick="toggleCardImage(event)">전체 보기</button>
-                </div>
-            ` : '';
+            // Thumbnail Logic: Use image if exists, otherwise placeholder icon
+            let thumbnailHtml;
+            if (post.imageUrl) {
+                thumbnailHtml = `<img src="${post.imageUrl}" alt="thumbnail" loading="lazy">`;
+            } else {
+                thumbnailHtml = `<div class="post-thumbnail-placeholder"><i class="fas fa-image"></i></div>`;
+            }
 
             return `
                 <div class="mobile-post-card" onclick="location.href='/post-detail.html?id=${post.id}'">
-                    <div class="mobile-post-header">
-                        <div class="mobile-post-avatar">${emoji}</div>
-                        <div class="mobile-post-meta">
-                            <span class="mobile-post-author">${escapeHtml(authorName)}</span>
-                            <span class="mobile-post-date">${date}</span>
+                    <div class="post-thumbnail-area">
+                        ${thumbnailHtml}
+                    </div>
+                    
+                    <div class="post-content-area">
+                        <div class="mobile-post-header">
+                            <h3 class="mobile-post-title">
+                                ${isNewPost(date) ? '<span class="new-badge"></span>' : ''}
+                                ${post.title}
+                            </h3>
                         </div>
-                    </div>
-                    <div class="mobile-post-title">
-                        ${escapeHtml(post.title)}
-                        ${commentBadge}
-                    </div>
-                    ${thumbnailHtml}
-                    <div class="mobile-post-stats" style="margin-top: 8px; color: var(--text-muted); font-size: 12px;">
-                        <span>👁️ ${post.viewCount}</span>
-                        <span style="margin-left: 8px;">💬 ${post.commentCount}</span>
+                        
+                        <div class="mobile-post-footer">
+                            <div class="post-meta-left">
+                                <span>${post.nickname}</span>
+                                <span>${timeString}</span>
+                            </div>
+                            <div class="post-meta-right">
+                                <span><i class="far fa-eye"></i> ${formatNumber(post.viewCount)}</span>
+                                <span><i class="far fa-comment"></i> ${formatNumber(post.commentCount)}</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
             `;
@@ -259,34 +264,6 @@
                 .replace(/>/g, '&gt;')
                 .replace(/"/g, '&quot;')
                 .replace(/'/g, '&#039;');
-        }
-        // Functions for Expandable Card Images
-        function checkCardImageHeight(img) {
-            const container = img.closest('.mobile-post-image-container');
-            const btn = container.querySelector('.expand-image-btn');
-
-            // If image is taller than 300px (thumbnail limit), show button
-            if (img.naturalHeight > 300 || img.offsetHeight > 300) {
-                container.classList.add('collapsed');
-                btn.style.display = 'block';
-            } else {
-                container.classList.remove('collapsed');
-                btn.style.display = 'none';
-            }
-        }
-
-        function toggleCardImage(e) {
-            e.stopPropagation(); // Prevent card click navigation
-            const btn = e.target;
-            const container = btn.closest('.mobile-post-image-container');
-
-            if (container.classList.contains('collapsed')) {
-                container.classList.remove('collapsed');
-                btn.textContent = '접기';
-            } else {
-                container.classList.add('collapsed');
-                btn.textContent = '전체 보기';
-            }
         }
 
 
