@@ -1033,11 +1033,20 @@ body {
 }
 
 /* Placeholder icon styling */
+/* Placeholder icon styling */
 .post-thumbnail-placeholder {
     color: var(--text-secondary);
-    font-size: 24px;
-    opacity: 0.5;
+    font-size: 12px;
+    /* Smaller font for text */
+    opacity: 0.6;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    font-weight: 500;
 }
+
 
 /* Right side content area */
 .post-content-area {
@@ -1099,4 +1108,53 @@ body {
     border-radius: 50%;
     margin-right: 6px;
     vertical-align: middle;
+}/* Lightbox Modal */
+.lightbox-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.9);
+    z-index: 1000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.lightbox-modal.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+.lightbox-content {
+    max-width: 90%;
+    max-height: 90%;
+    object-fit: contain;
+    transform: scale(0.9);
+    transition: transform 0.3s ease;
+}
+
+.lightbox-modal.active .lightbox-content {
+    transform: scale(1);
+}
+
+.lightbox-close {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    color: white;
+    font-size: 30px;
+    cursor: pointer;
+    background: none;
+    border: none;
+    padding: 10px;
+    z-index: 1001;
+}
+
+.post-detail-image img {
+    cursor: zoom-in; /* Indicate clickable */
 }

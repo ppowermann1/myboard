@@ -5,7 +5,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>OFF THE RECORD</title>
-    <link rel="stylesheet" href="/css/style.css?v=5">
+    <link rel="stylesheet" href="/css/style.css?v=7">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 
 <body>
@@ -181,12 +182,12 @@
             const date = new Date(post.createdAt);
             const timeString = formatTimeAgo(date); // Use time ago for list view
 
-            // Thumbnail Logic: Use image if exists, otherwise placeholder icon
+            // Thumbnail Logic: Use image if exists, otherwise "No Image" text
             let thumbnailHtml;
             if (post.imageUrl) {
                 thumbnailHtml = `<img src="${post.imageUrl}" alt="thumbnail" loading="lazy">`;
             } else {
-                thumbnailHtml = `<div class="post-thumbnail-placeholder"><i class="fas fa-image"></i></div>`;
+                thumbnailHtml = `<div class="post-thumbnail-placeholder"><span>No</span><span>Image</span></div>`;
             }
 
             return `
@@ -205,12 +206,12 @@
                         
                         <div class="mobile-post-footer">
                             <div class="post-meta-left">
-                                <span>${post.nickname}</span>
+                                <span>${escapeHtml(post.authorNickname || '익명')}</span>
                                 <span>${timeString}</span>
                             </div>
                             <div class="post-meta-right">
-                                <span><i class="far fa-eye"></i> ${formatNumber(post.viewCount)}</span>
-                                <span><i class="far fa-comment"></i> ${formatNumber(post.commentCount)}</span>
+                                <span><i class="fas fa-eye"></i> ${formatNumber(post.viewCount || 0)}</span>
+                                <span><i class="fas fa-comment-dots"></i> ${formatNumber(post.commentCount || 0)}</span>
                             </div>
                         </div>
                     </div>
