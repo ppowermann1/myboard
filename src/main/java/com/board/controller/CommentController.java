@@ -1,5 +1,6 @@
 package com.board.controller;
 
+import com.board.dto.CommentPageResponse;
 import com.board.dto.CommentRequest;
 import com.board.dto.CommentResponse;
 import com.board.entity.User;
@@ -12,8 +13,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-
 @RestController
 @RequestMapping("/api")
 @RequiredArgsConstructor
@@ -23,8 +22,10 @@ public class CommentController {
     private final UserService userService;
 
     @GetMapping("/posts/{postId}/comments")
-    public ResponseEntity<List<CommentResponse>> getComments(@PathVariable Long postId) {
-        return ResponseEntity.ok(commentService.getCommentsByPostId(postId));
+    public ResponseEntity<CommentPageResponse> getComments(
+            @PathVariable Long postId,
+            @RequestParam(defaultValue = "0") int page) {
+        return ResponseEntity.ok(commentService.getCommentsByPostIdPaginated(postId, page));
     }
 
     @PostMapping("/posts/{postId}/comments")

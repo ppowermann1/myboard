@@ -31,6 +31,12 @@ public class User {
     @Column(nullable = false, length = 10)
     private String nickname;
 
+    @Column(nullable = false, unique = true, length = 100)
+    private String email;
+
+    @Column(length = 20)
+    private String phoneNumber;
+
     @Column(length = 255)
     private String fcmToken;
 

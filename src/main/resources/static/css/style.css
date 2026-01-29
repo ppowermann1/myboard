@@ -1366,6 +1366,29 @@ body {
     font-size: 0.9em;
 }
 
+/* Author Badge (글쓴이) */
+/* Author Badge (글쓴이) */
+.author-badge {
+    display: inline-block;
+    margin-left: 6px;
+    padding: 2px 8px;
+    background: #4caf50;
+    /* 심플한 녹색 */
+    color: #ffffff;
+    font-size: 0.75em;
+    font-weight: 600;
+    border-radius: 4px;
+    /* 조금 더 각진 박스 형태 */
+}
+
+/* Post Author Special Styling - Removed excessive highlighting */
+.user-nickname-badge.post-author,
+.admin-nickname-container.post-author {
+    border: 1px solid var(--border-color);
+    font-weight: 600;
+}
+
+
 /* Board Tabs */
 .board-tabs {
     display: flex;
@@ -1499,4 +1522,53 @@ body {
 
 .icon-btn.secondary {
     background: var(--secondary-color);
+}
+
+/* Comment Pagination */
+.comment-pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 16px;
+    margin-top: 24px;
+    padding: 16px;
+    background: var(--card-bg);
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+}
+
+.pagination-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 18px;
+    background: var(--secondary-color);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 14px;
+    transition: all 0.2s ease;
+}
+
+.pagination-btn:hover:not(:disabled) {
+    background: var(--primary-color);
+    transform: translateY(-2px);
+}
+
+.pagination-btn:disabled {
+    background: var(--border-color);
+    color: #888;
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
+.pagination-info {
+    font-size: 14px;
+    color: var(--text-color);
+    font-weight: 600;
+    padding: 8px 16px;
+    background: var(--border-color);
+    border-radius: 6px;
 }

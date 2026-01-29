@@ -2,14 +2,14 @@
 const API_BASE = '/api';
 
 // Auth Functions
-async function signup(username, password, nickname) {
+async function signup(username, password, nickname, email, phoneNumber) {
     try {
         const response = await fetch(`${API_BASE}/auth/signup`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ username, password, nickname }),
+            body: JSON.stringify({ username, password, nickname, email, phoneNumber }),
         });
         const data = await response.json();
         return data;
@@ -146,13 +146,13 @@ async function deletePost(id) {
 }
 
 // Comment Functions
-async function getComments(postId) {
+async function getComments(postId, page = 0) {
     try {
-        const response = await fetch(`${API_BASE}/posts/${postId}/comments`);
+        const response = await fetch(`${API_BASE}/posts/${postId}/comments?page=${page}`);
         return await response.json();
     } catch (error) {
         console.error('Get comments error:', error);
-        return [];
+        return { comments: [], currentPage: 0, totalPages: 0, totalComments: 0, hasNext: false, hasPrevious: false };
     }
 }
 

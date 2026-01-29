@@ -85,4 +85,31 @@ public class AuthController {
         }
         return ResponseEntity.status(401).build();
     }
+
+    @GetMapping("/check-username")
+    public ResponseEntity<?> checkUsername(@RequestParam String username) {
+        boolean exists = userService.findByUsername(username) != null;
+        Map<String, Object> response = new HashMap<>();
+        response.put("available", !exists);
+        response.put("message", exists ? "이미 사용 중인 아이디입니다" : "사용 가능한 아이디입니다");
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/check-nickname")
+    public ResponseEntity<?> checkNickname(@RequestParam String nickname) {
+        boolean exists = userService.existsByNickname(nickname);
+        Map<String, Object> response = new HashMap<>();
+        response.put("available", !exists);
+        response.put("message", exists ? "이미 사용 중인 별명입니다" : "사용 가능한 별명입니다");
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/check-email")
+    public ResponseEntity<?> checkEmail(@RequestParam String email) {
+        boolean exists = userService.existsByEmail(email);
+        Map<String, Object> response = new HashMap<>();
+        response.put("available", !exists);
+        response.put("message", exists ? "이미 사용 중인 이메일입니다" : "사용 가능한 이메일입니다");
+        return ResponseEntity.ok(response);
+    }
 }

@@ -17,5 +17,10 @@ public class CommentResponse {
     private String authorUsername;
     private String authorNickname;
     private String authorRole;
+    private String anonymousNickname; // 익명게시판용 닉네임
+
+    @com.fasterxml.jackson.annotation.JsonProperty("isAuthor")
+    private boolean isAuthor; // 글 작성자 여부
+
     private String createdAt;
 }

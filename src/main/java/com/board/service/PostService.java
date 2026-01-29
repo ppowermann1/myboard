@@ -31,7 +31,9 @@ public class PostService {
     private final PostRepository postRepository;
     private final BoardRepository boardRepository;
     private final FileService fileService;
+    private final AnonymousNicknameService anonymousNicknameService;
 
+    @Transactional
     public Map<String, Object> getAllPosts(String boardId, int page, int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
         Page<Post> postPage = postRepository.findAllByBoardIdOrderByCreatedAtDesc(boardId, pageable);
@@ -49,6 +51,7 @@ public class PostService {
         return response;
     }
 
+    @Transactional
     public Map<String, Object> searchPosts(String boardId, String searchType, String keyword, int page, int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
         Page<Post> postPage;
@@ -83,6 +86,7 @@ public class PostService {
         return response;
     }
 
+    @Transactional(readOnly = true)
     public PostResponse getPostById(Long id) {
         Post post = postRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("게시글을 찾을 수 없습니다"));
@@ -195,6 +199,13 @@ public class PostService {
     }
 
     private PostResponse convertToResponse(Post post) {
+        boolean isAnonymousBoard = "anonymous".equals(post.getBoard().getId());
+
+        String authorAnonymousNickname = null;
+        if (isAnonymousBoard) {
+            authorAnonymousNickname = anonymousNicknameService.getOrAssignNickname(post, post.getAuthor());
+        }
+
         return PostResponse.builder()
                 .id(post.getId())
                 .boardId(post.getBoard().getId())
@@ -203,6 +214,7 @@ public class PostService {
                 .authorUsername(post.getAuthor().getUsername())
                 .authorNickname(post.getAuthor().getNickname())
                 .authorRole(post.getAuthor().getRole().name())
+                .authorAnonymousNickname(authorAnonymousNickname)
                 .imageUrl(post.getImageUrl())
                 .imageUrl2(post.getImageUrl2())
                 .imageUrl3(post.getImageUrl3())

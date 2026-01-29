@@ -43,7 +43,23 @@ public class PostController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<PostResponse> getPost(@PathVariable Long id) {
+    public ResponseEntity<PostResponse> getPost(@PathVariable Long id, jakarta.servlet.http.HttpSession session) {
+        // 세션에서 조회한 게시글 목록 가져오기
+        @SuppressWarnings("unchecked")
+        java.util.Set<Long> viewedPosts = (java.util.Set<Long>) session.getAttribute("viewedPosts");
+
+        if (viewedPosts == null) {
+            viewedPosts = new java.util.HashSet<>();
+            session.setAttribute("viewedPosts", viewedPosts);
+        }
+
+        // 이미 조회한 게시글이면 조회수 증가 없이 반환
+        if (viewedPosts.contains(id)) {
+            return ResponseEntity.ok(postService.getPostById(id));
+        }
+
+        // 처음 조회하는 게시글이면 조회수 증가 후 세션에 추가
+        viewedPosts.add(id);
         return ResponseEntity.ok(postService.getPostByIdAndIncrementView(id));
     }
 

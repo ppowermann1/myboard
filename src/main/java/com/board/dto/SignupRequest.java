@@ -1,5 +1,6 @@
 package com.board.dto;
 
+import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
@@ -23,4 +24,11 @@ public class SignupRequest {
     @NotBlank(message = "별명은 필수입니다")
     @Size(min = 2, max = 10, message = "별명은 2-10자 사이여야 합니다")
     private String nickname;
+
+    @NotBlank(message = "이메일은 필수입니다")
+    @Email(message = "올바른 이메일 형식이 아닙니다")
+    private String email;
+
+    @Pattern(regexp = "^(010-\\d{4}-\\d{4})?$", message = "핸드폰번호는 010-XXXX-XXXX 형식이어야 합니다")
+    private String phoneNumber;
 }

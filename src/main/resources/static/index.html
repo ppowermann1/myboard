@@ -253,8 +253,8 @@
                         <div class="mobile-post-footer">
                             <div class="post-meta-left">
                                 ${post.authorRole === 'ADMIN' ?
-                    `<span class="admin-nickname-container"><i class="fas fa-camera"></i> ${escapeHtml(post.authorNickname)}</span>` :
-                    `<span class="user-nickname-badge"><i class="fas fa-user"></i> ${escapeHtml(post.authorNickname || '익명')}</span>`
+                    `<span class="admin-nickname-container"><i class="fas fa-camera"></i> ${escapeHtml(post.authorAnonymousNickname || post.authorNickname)}</span>` :
+                    `<span class="user-nickname-badge"><i class="fas fa-user"></i> ${escapeHtml(post.authorAnonymousNickname || post.authorNickname || '익명')}</span>`
                 }
                                 <span>${timeString}</span>
                             </div>
