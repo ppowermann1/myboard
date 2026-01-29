@@ -1834,28 +1834,71 @@ body {
     background: rgba(34, 197, 94, 0.15);
 }
 
-/* 대댓글 스타일 */
+/* 대댓글 스타일 - Refined Boxed Style */
+.comment {
+    position: relative;
+    padding: 12px;
+    margin-bottom: 8px;
+    background: var(--card-bg);
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+}
+
 .reply-comment {
-    margin-left: 40px;
-    margin-top: 12px;
-    padding-left: 15px;
-    border-left: 2px solid var(--border-color);
-    background: rgba(255, 255, 255, 0.02);
-    border-radius: 0 8px 8px 0;
+    margin-left: 20px;
+    margin-top: 4px;
+    padding: 12px;
+    border-left: 3px solid var(--primary-color);
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 8px;
+    border: none;
+}
+
+/* 대댓글 연결선 강조 - 호버 효과 */
+.reply-comment:hover {
+    background: rgba(255, 255, 255, 0.05);
 }
 
 .reply-comment .comment-header {
-    padding-top: 8px;
+    padding-top: 0;
+}
+
+.reply-comment .comment-content {
+    font-size: 0.95em;
+    color: var(--text-primary);
 }
 
 /* 답글 입력 폼 */
 .reply-form {
-    margin-top: 12px;
+    margin: 8px 0 8px 20px;
     padding: 12px;
     background: var(--bg-secondary);
-    border-radius: 8px;
+    border-radius: 12px;
     border: 1px solid var(--border-color);
+    position: relative;
 }
+
+.clickable-content {
+    cursor: pointer;
+    transition: opacity 0.2s;
+}
+
+.clickable-content:hover {
+    opacity: 0.8;
+}
+
+/* 답글 폼에도 연결선 느낌을 주고 싶다면 아래 주석 해제 */
+/*
+.reply-form::before {
+    content: '';
+    position: absolute;
+    left: -18px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: var(--border-color);
+}
+*/
 
 .reply-form .form-textarea {
     width: 100%;
@@ -2099,4 +2142,50 @@ body {
 .btn-modal-close:hover {
     color: var(--text-primary);
     background-color: var(--bg-tertiary);
+}
+
+/* Mobile Responsive Improvements */
+@media (max-width: 480px) {
+
+    /* 1. 댓글 날짜 및 작성자 레이아웃 개선 (오버랩 방지) */
+    .comment-author-info {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 2px;
+    }
+
+    .comment-author-row {
+        align-items: flex-start;
+        padding-right: 90px;
+        /* 우측 버튼 영역 확보 */
+    }
+
+    .post-date {
+        font-size: 11px;
+        margin-left: 0 !important;
+        margin-top: 2px;
+        color: var(--text-muted);
+    }
+
+    /* 2. 댓글 버튼 크기 축소 및 위치 조정 */
+    .comment-vote-btn {
+        padding: 4px 8px;
+        font-size: 11px;
+        height: 28px;
+    }
+
+    .comment-vote-btn i {
+        font-size: 10px;
+    }
+
+    .comment-vote-section {
+        top: 12px;
+        right: 12px;
+        gap: 4px;
+    }
+
+    /* 모바일에서 카드 여백 조정 */
+    .comment {
+        padding: 12px 10px;
+    }
 }

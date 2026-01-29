@@ -248,12 +248,11 @@
                 repliesHtml = comment.replies.map(reply => renderComment(reply, true)).join('');
             }
 
-            // 대댓글이 아닌 경우에만 답글 버튼 표시
-            const replyButton = !isReply && currentUser ? `
-                <button class="comment-vote-btn reply-btn" onclick="toggleReplyForm(${comment.id})" title="답글">
-                    <i class="fas fa-reply"></i>
-                </button>
-            ` : '';
+            // 대댓글이 아닌 경우에만 답글 기능 활성화
+            const canReply = !isReply && currentUser;
+            const contentClass = canReply ? 'comment-content clickable-content' : 'comment-content';
+            const onClickAttr = canReply ? `onclick="toggleReplyForm(${comment.id})"` : '';
+            const titleAttr = canReply ? 'title="클릭하여 답글 달기"' : '';
 
             return `
                 <div class="comment${replyClass}" data-comment-id="${comment.id}">
@@ -269,7 +268,7 @@
                         </div>
                     </div>
                     
-                    <div class="comment-content">${parseContent(comment.content)}</div>
+                    <div class="${contentClass}" ${onClickAttr} ${titleAttr}>${parseContent(comment.content)}</div>
 
                     <div class="comment-vote-section">
                         ${canDelete ? `
@@ -277,7 +276,6 @@
                                 <i class="fas fa-trash-alt"></i>
                             </button>
                         ` : ''}
-                        ${replyButton}
                         <button class="comment-vote-btn like-btn ${comment.currentUserVote === 'LIKE' ? 'active' : ''}" 
                                 onclick="handleCommentVote(${comment.id}, 'LIKE')"
                                 data-comment-id="${comment.id}">
@@ -374,6 +372,39 @@
 
         // Expose handleDeleteComment to global scope for onclick
         window.handleDeleteComment = handleDeleteComment;
+
+        // Post Edit/Delete Functions
+        function goToEditPage() {
+            const postId = new URLSearchParams(window.location.search).get('id');
+            window.location.href = `post-form.html?id=${postId}`;
+        }
+
+        async function handleDeletePost() {
+            if (!confirm('정말 이 게시글을 삭제하시겠습니까?')) {
+                return;
+            }
+
+            try {
+                const postId = new URLSearchParams(window.location.search).get('id');
+                const success = await deletePost(postId);
+
+                if (success) {
+                    showSuccess('게시글이 삭제되었습니다');
+                    setTimeout(() => {
+                        window.location.href = 'index.html';
+                    }, 1000);
+                } else {
+                    showError('게시글 삭제에 실패했습니다');
+                }
+            } catch (error) {
+                console.error('Delete post error:', error);
+                showError('게시글 삭제 중 오류가 발생했습니다');
+            }
+        }
+
+        // Expose functions to global scope for onclick
+        window.goToEditPage = goToEditPage;
+        window.handleDeletePost = handleDeletePost;
 
         // Lightbox Functions
         function setupLightbox() {
