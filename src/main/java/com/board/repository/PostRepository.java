@@ -13,6 +13,8 @@ import java.util.List;
 
 @Repository
 public interface PostRepository extends JpaRepository<Post, Long> {
+        boolean existsByTitle(String title);
+
         List<Post> findAllByOrderByCreatedAtDesc();
 
         // 게시판별 목록 조회

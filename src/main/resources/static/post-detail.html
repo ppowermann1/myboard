@@ -203,17 +203,18 @@
                     }
                                 <div class="post-date">${formatDate(comment.createdAt)}</div>
                             </div>
-                        </div>
+                        </div> <!-- Closes comment-author-row -->
+                    </div> <!-- Closes comment-header -->
+                    
+                    <div class="comment-content">${parseContent(comment.content)}</div>
+
+                    <!-- 댓글 액션 오버레이 (삭제 + 추천/반대) -->
+                    <div class="comment-vote-section">
                             ${canDelete ? `
-                                <button type="button" class="btn-delete-comment" onclick="handleDeleteComment(${comment.id})">
-                                    <i class="fas fa-trash-alt"></i> 삭제
+                                <button type="button" class="comment-vote-btn delete-btn" onclick="handleDeleteComment(${comment.id})" title="삭제">
+                                    <i class="fas fa-trash-alt"></i>
                                 </button>
                             ` : ''}
-                        </div>
-                        <div class="comment-content">${parseContent(comment.content)}</div>
-                        
-                        <!-- 댓글 투표 버튼 -->
-                        <div class="comment-vote-section">
                             <button class="comment-vote-btn like-btn ${comment.currentUserVote === 'LIKE' ? 'active' : ''}" 
                                     onclick="handleCommentVote(${comment.id}, 'LIKE')"
                                     data-comment-id="${comment.id}">

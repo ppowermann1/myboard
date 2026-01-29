@@ -67,6 +67,8 @@
         const urlParams = new URLSearchParams(window.location.search);
         const postId = urlParams.get('id');
         const boardId = urlParams.get('boardId') || 'free';
+        const DRAFT_TITLE_KEY = 'post_draft_title';
+        const DRAFT_CONTENT_KEY = 'post_draft_content';
         let isEditMode = false;
         let selectedFiles = []; // Array to store New Selected File objects
         let preservedImages = []; // Array to store Existing image URLs to keep
@@ -150,7 +152,26 @@
                 if (boardId === 'anonymous') boardName = 'BLIND';
                 else if (boardId === 'jobs') boardName = '구인구직';
                 document.getElementById('formTitle').textContent = `${boardName} 글쓰기`;
+
+                // Restore draft if available
+                const savedTitle = localStorage.getItem(DRAFT_TITLE_KEY);
+                const savedContent = localStorage.getItem(DRAFT_CONTENT_KEY);
+
+                if (savedTitle || savedContent) {
+                    if (savedTitle) document.getElementById('title').value = savedTitle;
+                    if (savedContent) document.getElementById('content').value = savedContent;
+                    // Optional: Simple toast or log could go here, but keeping it silent for smooth UX
+                }
             }
+
+            // Auto-save listeners
+            document.getElementById('title').addEventListener('input', (e) => {
+                if (!isEditMode) localStorage.setItem(DRAFT_TITLE_KEY, e.target.value);
+            });
+
+            document.getElementById('content').addEventListener('input', (e) => {
+                if (!isEditMode) localStorage.setItem(DRAFT_CONTENT_KEY, e.target.value);
+            });
         }
 
         async function loadPost() {
@@ -179,6 +200,11 @@
                     window.location.replace(`/post-detail.html?id=${postId}`);
                 } else {
                     const result = await createPostCustom(title, content, '', selectedFiles, boardId);
+
+                    // Clear draft on success
+                    localStorage.removeItem(DRAFT_TITLE_KEY);
+                    localStorage.removeItem(DRAFT_CONTENT_KEY);
+
                     showSuccess('게시글이 작성되었습니다');
                     window.location.replace(`/post-detail.html?id=${result.id}`);
                 }

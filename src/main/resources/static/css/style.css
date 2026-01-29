@@ -565,6 +565,8 @@ body {
     padding: var(--spacing-lg);
     border-radius: var(--radius);
     margin-bottom: var(--spacing-md);
+    position: relative;
+    /* Added for absolute positioning of votes */
 }
 
 .comment-header {
@@ -576,7 +578,7 @@ body {
 
 .comment-content {
     color: var(--text-secondary);
-    margin-left: 56px;
+    margin-top: 8px;
 }
 
 /* Loading & Empty States */
@@ -1766,28 +1768,41 @@ body {
 /* Comment Vote Styles */
 .comment-vote-section {
     display: flex;
-    gap: 12px;
-    margin-top: 12px;
-    padding-top: 12px;
-    border-top: 1px solid var(--border-color);
+    gap: 6px;
+    position: absolute;
+    top: 10px;
+    right: 12px;
+    z-index: 5;
+    /* Ensure it stays on top */
 }
 
 .comment-vote-btn {
     display: flex;
     align-items: center;
     gap: 4px;
-    padding: 6px 12px;
-    background: transparent;
+    padding: 3px 8px;
+    background: rgba(255, 255, 255, 0.05);
     border: 1px solid var(--border-color);
-    border-radius: 16px;
+    border-radius: 6px;
     cursor: pointer;
-    font-size: 13px;
+    font-size: 11px;
     color: #888;
     transition: all 0.2s ease;
 }
 
+.comment-vote-btn i {
+    font-size: 10px;
+}
+
 .comment-vote-btn:hover {
     transform: translateY(-1px);
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.comment-vote-btn.delete-btn:hover {
+    border-color: #e74c3c;
+    color: #e74c3c;
+    background: rgba(231, 76, 60, 0.15);
 }
 
 .comment-vote-btn.like-btn:hover {
