@@ -333,8 +333,7 @@ body {
     color: var(--text-primary);
 }
 
-.form-input,
-.form-textarea {
+.form-input {
     width: 100%;
     padding: var(--spacing-md);
     border: 1px solid var(--border-color);
@@ -346,17 +345,13 @@ body {
     transition: var(--transition);
 }
 
-.form-input:focus,
-.form-textarea:focus {
+.form-input:focus {
     outline: none;
     border-color: var(--accent-primary);
     box-shadow: 0 0 0 3px rgba(26, 115, 232, 0.1);
 }
 
-.form-textarea {
-    resize: vertical;
-    min-height: 120px;
-}
+/* Consolidated textarea styles moved to bottom of file */
 
 .form-error {
     color: var(--error-color);
@@ -449,18 +444,46 @@ body {
 }
 
 #commentForm {
-    padding: var(--spacing-md);
-    background-color: var(--bg-secondary);
-    border-radius: var(--radius);
-    border: 1px solid var(--border-color);
-    transition: var(--transition);
+    padding: 0;
+    background-color: transparent;
+    border: none;
     margin-bottom: var(--spacing-lg);
+    position: relative;
+    /* For naturally placing the submit button if needed */
 }
 
 #commentForm:hover {
-    background-color: var(--bg-tertiary);
+    transform: none;
+    background-color: transparent;
+    border: none;
+}
+
+.form-group {
+    margin-bottom: var(--spacing-sm);
+}
+
+.comment-input-container {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+}
+
+.form-textarea {
+    resize: none;
+    min-height: 80px;
+    padding: 12px;
+    background-color: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    color: var(--text-primary);
+    font-size: 14px;
+    transition: all 0.2s ease;
+}
+
+.form-textarea:focus {
+    background-color: rgba(255, 255, 255, 0.05);
     border-color: var(--accent-primary);
-    transform: translateY(-2px);
+    box-shadow: none;
 }
 
 .comment {
@@ -1583,58 +1606,54 @@ body {
 .vote-section {
     display: flex;
     justify-content: center;
-    gap: 24px;
-    margin-top: 24px;
-    padding: 20px;
-    background: var(--card-bg);
-    border-radius: 12px;
-    border: 1px solid var(--border-color);
+    gap: 32px;
+    margin-top: 32px;
+    padding: 0;
+    background: transparent;
+    border: none;
 }
 
 .vote-btn {
     display: flex;
+    flex-direction: column;
     align-items: center;
-    gap: 8px;
-    padding: 12px 24px;
-    background: var(--card-bg);
-    border: 2px solid var(--border-color);
-    border-radius: 25px;
+    gap: 6px;
+    padding: 8px;
+    background: transparent;
+    border: none;
     cursor: pointer;
-    font-size: 16px;
-    font-weight: 600;
     color: #888;
     transition: all 0.2s ease;
 }
 
-.vote-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+.vote-btn i {
+    font-size: 16px;
+    /* Reduced from default (~24px) */
+    transition: transform 0.2s ease;
 }
 
-.vote-btn.like-btn:hover {
-    border-color: #ff9500;
+.vote-btn:hover {
+    transform: none;
+    box-shadow: none;
+}
+
+.vote-btn.like-btn:hover,
+.vote-btn.like-btn.active {
     color: #ff9500;
 }
 
-.vote-btn.dislike-btn:hover {
-    border-color: #6366f1;
+.vote-btn.dislike-btn:hover,
+.vote-btn.dislike-btn.active {
     color: #6366f1;
 }
 
-.vote-btn.like-btn.active {
-    background: linear-gradient(135deg, #ff9500, #ff6b00);
-    border-color: transparent;
-    color: white;
-}
-
-.vote-btn.dislike-btn.active {
-    background: linear-gradient(135deg, #6366f1, #4f46e5);
-    border-color: transparent;
-    color: white;
+.vote-btn.active i {
+    transform: scale(1.1);
 }
 
 .vote-count {
-    font-weight: 700;
+    font-size: 13px;
+    font-weight: 600;
 }
 
 /* Comment Vote Styles */
@@ -1695,39 +1714,10 @@ body {
 
 .best-post-card {
     position: relative;
-    border: 1px solid transparent !important;
-    /* Thinner border */
-    background: var(--card-bg);
-    background: var(--card-bg) !important;
-    border: none !important;
-    z-index: 1;
+    /* Maintain relative for refresh button positioning */
 }
 
-/* Strict Gold Border Effect (Matching Screenshot) */
-.best-post-card::before {
-    content: '';
-    position: absolute;
-    top: -2px;
-    left: -2px;
-    right: -2px;
-    bottom: -2px;
-    background: linear-gradient(90deg, #ffd700, #ffec8b, #ffd700, #ffec8b);
-    background-size: 300% 100%;
-    z-index: -1;
-    border-radius: 14px;
-    animation: gold-glitter-border 4s linear infinite;
-}
-
-@keyframes gold-glitter-border {
-    0% {
-        background-position: 0% 50%;
-    }
-
-    100% {
-        background-position: 300% 50%;
-    }
-}
-
+/* Indicators Styling */
 .gold-icon {
     color: #ffd700;
     margin-right: 4px;
@@ -1775,4 +1765,37 @@ body {
 .best-like-count {
     color: #ff6b00 !important;
     font-weight: 700 !important;
+}
+
+/* Comment Submit Button Naturally Positioned */
+.comment-submit-area {
+    position: absolute;
+    bottom: 8px;
+    right: 8px;
+}
+
+.comment-submit-area .icon-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: var(--shadow-sm);
+}
+
+.comment-submit-area .icon-btn:hover {
+    transform: scale(1.1);
+    background: var(--secondary-color);
+}
+
+.comment-submit-area .icon-btn i {
+    font-size: 14px;
+    margin-left: -2px;
+    /* Visual centering for plane icon */
 }
