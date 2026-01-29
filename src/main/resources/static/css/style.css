@@ -1107,6 +1107,17 @@ body {
     box-shadow: var(--shadow-md);
 }
 
+/* Visited Post Styling */
+.mobile-post-card.visited {
+    opacity: 0.5;
+    transition: opacity 0.3s ease;
+}
+
+.mobile-post-card.visited .mobile-post-title {
+    color: var(--text-secondary);
+    /* More muted than var(--text-primary) */
+}
+
 /* Left side thumbnail area */
 .post-thumbnail-area {
     width: 80px;

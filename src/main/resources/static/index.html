@@ -241,6 +241,10 @@
             const date = new Date(post.createdAt);
             const timeString = formatTimeAgo(date); // Use time ago for list view
 
+            // Check if visited
+            const visitedPosts = JSON.parse(localStorage.getItem('visited_posts') || '[]');
+            const isVisited = visitedPosts.includes(post.id);
+
             // Thumbnail Logic: Use image if exists, otherwise "No Image" text
             let thumbnailHtml;
             if (post.imageUrl) {
@@ -250,7 +254,7 @@
             }
 
             return `
-                <div class="mobile-post-card" onclick="location.href='/post-detail.html?id=${post.id}'">
+                <div class="mobile-post-card ${isVisited ? 'visited' : ''}" onclick="markPostAsVisited(${post.id})">
                     <div class="post-thumbnail-area">
                         ${thumbnailHtml}
                     </div>
@@ -332,6 +336,17 @@
         }
 
 
+        function markPostAsVisited(postId) {
+            const visitedPosts = JSON.parse(localStorage.getItem('visited_posts') || '[]');
+            if (!visitedPosts.includes(postId)) {
+                visitedPosts.push(postId);
+                // Keep only last 100 visited posts to save space
+                if (visitedPosts.length > 100) visitedPosts.shift();
+                localStorage.setItem('visited_posts', JSON.stringify(visitedPosts));
+            }
+            location.href = `/post-detail.html?id=${postId}`;
+        }
+
         function goToWritePage() {
             window.location.href = `/post-form.html?boardId=${currentBoardId}`;
         }
@@ -378,8 +393,12 @@
                     thumbnailHtml = `<div class="post-thumbnail-placeholder"><span>No</span><span>Image</span></div>`;
                 }
 
+                // Check if visited
+                const visitedPosts = JSON.parse(localStorage.getItem('visited_posts') || '[]');
+                const isVisited = visitedPosts.includes(post.id);
+
                 content.innerHTML = `
-                    <div class="mobile-post-card best-post-card" onclick="location.href='/post-detail.html?id=${post.id}'">
+                    <div class="mobile-post-card best-post-card ${isVisited ? 'visited' : ''}" onclick="markPostAsVisited(${post.id})">
                         <button class="best-refresh-btn" onclick="event.stopPropagation(); loadRandomBestPost()" aria-label="새로고침">
                             <i class="fas fa-sync-alt"></i>
                         </button>
