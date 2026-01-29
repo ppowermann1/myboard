@@ -156,14 +156,18 @@ async function getComments(postId, page = 0) {
     }
 }
 
-async function createComment(postId, content, password = '') {
+async function createComment(postId, content, password = '', parentId = null) {
     try {
+        const body = { content, password };
+        if (parentId) {
+            body.parentId = parentId;
+        }
         const response = await fetch(`${API_BASE}/posts/${postId}/comments`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ content, password }),
+            body: JSON.stringify(body),
         });
         return await response.json();
     } catch (error) {

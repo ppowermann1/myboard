@@ -15,4 +15,15 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
     Page<Comment> findByPostIdOrderByCreatedAtAsc(Long postId, Pageable pageable);
 
     long countByPostId(Long postId);
+
+    // 최상위 댓글만 조회 (대댓글 제외)
+    List<Comment> findByPostIdAndParentIsNullOrderByCreatedAtAsc(Long postId);
+
+    Page<Comment> findByPostIdAndParentIsNullOrderByCreatedAtAsc(Long postId, Pageable pageable);
+
+    // 특정 댓글의 대댓글 조회
+    List<Comment> findByParentIdOrderByCreatedAtAsc(Long parentId);
+
+    // 최상위 댓글 수 (대댓글 제외)
+    long countByPostIdAndParentIsNull(Long postId);
 }

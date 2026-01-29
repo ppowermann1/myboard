@@ -212,58 +212,7 @@
                 return;
             }
 
-            let html = data.comments.map(comment => {
-                const isAdmin = currentUser && currentUser.role === 'ADMIN';
-                const isAuthor = currentUser && comment.authorUsername === currentUser.username;
-                const canDelete = isAuthor || isAdmin;
-
-                // Use anonymous nickname if available, otherwise use regular nickname
-                const displayNickname = comment.anonymousNickname || comment.authorNickname;
-
-                // 관리자는 기존 스타일 유지, 일반 사용자만 글쓴이 표시 적용
-                const isNonAdminAuthor = comment.isAuthor && comment.authorRole !== 'ADMIN';
-                const authorBadge = isNonAdminAuthor ? ' <span class="author-badge">글쓴이</span>' : '';
-                const authorClass = isNonAdminAuthor ? ' post-author' : '';
-
-                return `
-                    <div class="comment">
-                        <div class="comment-header">
-                            <div class="comment-author-row">
-                            <div class="comment-author-info">
-                                ${comment.authorRole === 'ADMIN' ?
-                        `<span class="admin-nickname-container"><i class="fas fa-camera"></i> ${displayNickname}</span>` :
-                        `<span class="user-nickname-badge${authorClass}"><i class="fas fa-user"></i> ${displayNickname}${authorBadge}</span>`
-                    }
-                                <div class="post-date">${formatDate(comment.createdAt)}</div>
-                            </div>
-                        </div> <!-- Closes comment-author-row -->
-                    </div> <!-- Closes comment-header -->
-                    
-                    <div class="comment-content">${parseContent(comment.content)}</div>
-
-                    <!-- 댓글 액션 오버레이 (삭제 + 추천/반대) -->
-                    <div class="comment-vote-section">
-                            ${canDelete ? `
-                                <button type="button" class="comment-vote-btn delete-btn" onclick="handleDeleteComment(${comment.id})" title="삭제">
-                                    <i class="fas fa-trash-alt"></i>
-                                </button>
-                            ` : ''}
-                            <button class="comment-vote-btn like-btn ${comment.currentUserVote === 'LIKE' ? 'active' : ''}" 
-                                    onclick="handleCommentVote(${comment.id}, 'LIKE')"
-                                    data-comment-id="${comment.id}">
-                                <i class="fas fa-thumbs-up"></i>
-                                <span id="commentLike-${comment.id}">${comment.likeCount || 0}</span>
-                            </button>
-                            <button class="comment-vote-btn dislike-btn ${comment.currentUserVote === 'DISLIKE' ? 'active' : ''}" 
-                                    onclick="handleCommentVote(${comment.id}, 'DISLIKE')"
-                                    data-comment-id="${comment.id}">
-                                <i class="fas fa-thumbs-down"></i>
-                                <span id="commentDislike-${comment.id}">${comment.dislikeCount || 0}</span>
-                            </button>
-                        </div>
-                    </div>
-                `;
-            }).join('');
+            let html = data.comments.map(comment => renderComment(comment, false)).join('');
 
             // Add pagination controls
             if (data.totalPages > 1) {
@@ -282,6 +231,123 @@
 
             container.innerHTML = html;
         }
+
+        // 댓글 렌더링 함수 (대댓글 지원)
+        function renderComment(comment, isReply = false) {
+            const isAdmin = currentUser && currentUser.role === 'ADMIN';
+            const isAuthor = currentUser && comment.authorUsername === currentUser.username;
+            const canDelete = isAuthor || isAdmin;
+            const displayNickname = comment.anonymousNickname || comment.authorNickname;
+            const isNonAdminAuthor = comment.isAuthor && comment.authorRole !== 'ADMIN';
+            const authorBadge = isNonAdminAuthor ? ' <span class="author-badge">글쓴이</span>' : '';
+            const authorClass = isNonAdminAuthor ? ' post-author' : '';
+            const replyClass = isReply ? ' reply-comment' : '';
+
+            let repliesHtml = '';
+            if (comment.replies && comment.replies.length > 0) {
+                repliesHtml = comment.replies.map(reply => renderComment(reply, true)).join('');
+            }
+
+            // 대댓글이 아닌 경우에만 답글 버튼 표시
+            const replyButton = !isReply && currentUser ? `
+                <button class="comment-vote-btn reply-btn" onclick="toggleReplyForm(${comment.id})" title="답글">
+                    <i class="fas fa-reply"></i>
+                </button>
+            ` : '';
+
+            return `
+                <div class="comment${replyClass}" data-comment-id="${comment.id}">
+                    <div class="comment-header">
+                        <div class="comment-author-row">
+                            <div class="comment-author-info">
+                                ${comment.authorRole === 'ADMIN' ?
+                    `<span class="admin-nickname-container"><i class="fas fa-camera"></i> ${displayNickname}</span>` :
+                    `<span class="user-nickname-badge${authorClass}"><i class="fas fa-user"></i> ${displayNickname}${authorBadge}</span>`
+                }
+                                <div class="post-date">${formatDate(comment.createdAt)}</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="comment-content">${parseContent(comment.content)}</div>
+
+                    <div class="comment-vote-section">
+                        ${canDelete ? `
+                            <button type="button" class="comment-vote-btn delete-btn" onclick="handleDeleteComment(${comment.id})" title="삭제">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
+                        ` : ''}
+                        ${replyButton}
+                        <button class="comment-vote-btn like-btn ${comment.currentUserVote === 'LIKE' ? 'active' : ''}" 
+                                onclick="handleCommentVote(${comment.id}, 'LIKE')"
+                                data-comment-id="${comment.id}">
+                            <i class="fas fa-thumbs-up"></i>
+                            <span id="commentLike-${comment.id}">${comment.likeCount || 0}</span>
+                        </button>
+                        <button class="comment-vote-btn dislike-btn ${comment.currentUserVote === 'DISLIKE' ? 'active' : ''}" 
+                                onclick="handleCommentVote(${comment.id}, 'DISLIKE')"
+                                data-comment-id="${comment.id}">
+                            <i class="fas fa-thumbs-down"></i>
+                            <span id="commentDislike-${comment.id}">${comment.dislikeCount || 0}</span>
+                        </button>
+                    </div>
+
+                    <!-- 답글 입력 폼 (숨김 상태) -->
+                    <div id="replyForm-${comment.id}" class="reply-form hidden">
+                        <textarea id="replyContent-${comment.id}" class="form-textarea" placeholder="답글을 입력하세요" rows="2"></textarea>
+                        <div class="reply-actions">
+                            <button class="btn btn-sm" onclick="toggleReplyForm(${comment.id})">취소</button>
+                            <button class="btn btn-primary btn-sm" onclick="submitReply(${comment.id})">등록</button>
+                        </div>
+                    </div>
+
+                    <!-- 대댓글 목록 -->
+                    ${repliesHtml}
+                </div>
+            `;
+        }
+
+        // 답글 폼 토글
+        function toggleReplyForm(commentId) {
+            const form = document.getElementById(`replyForm-${commentId}`);
+            if (form) {
+                form.classList.toggle('hidden');
+                if (!form.classList.contains('hidden')) {
+                    document.getElementById(`replyContent-${commentId}`).focus();
+                }
+            }
+        }
+
+        // 답글 등록
+        async function submitReply(parentId) {
+            if (!currentUser) {
+                showError('로그인이 필요합니다');
+                return;
+            }
+
+            const contentInput = document.getElementById(`replyContent-${parentId}`);
+            const content = contentInput.value.trim();
+
+            if (!content) {
+                showError('내용을 입력해주세요');
+                return;
+            }
+
+            try {
+                await createComment(postId, content, '', parentId);
+                contentInput.value = '';
+                toggleReplyForm(parentId);
+                await loadComments(currentCommentPage);
+                showSuccess('답글이 등록되었습니다');
+            } catch (error) {
+                console.error('Reply creation failed:', error);
+                showError('답글 작성에 실패했습니다');
+            }
+        }
+
+        // Expose functions to global scope
+        window.toggleReplyForm = toggleReplyForm;
+        window.submitReply = submitReply;
 
         async function handleDeleteComment(commentId) {
             if (confirm('댓글을 삭제하시겠습니까?')) {

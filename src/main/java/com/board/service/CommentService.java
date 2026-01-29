@@ -48,17 +48,22 @@ public class CommentService {
                                 .orElseThrow(() -> new IllegalArgumentException("게시글을 찾을 수 없습니다"));
 
                 Pageable pageable = PageRequest.of(page, COMMENTS_PER_PAGE);
-                Page<Comment> commentPage = commentRepository.findByPostIdOrderByCreatedAtAsc(postId, pageable);
+                // 최상위 댓글만 페이지네이션으로 조회 (대댓글 제외)
+                Page<Comment> commentPage = commentRepository.findByPostIdAndParentIsNullOrderByCreatedAtAsc(postId,
+                                pageable);
 
                 List<CommentResponse> comments = commentPage.getContent().stream()
-                                .map(comment -> convertToResponse(comment, post))
+                                .map(comment -> convertToResponseWithReplies(comment, post))
                                 .collect(Collectors.toList());
+
+                // 전체 댓글 수 (대댓글 포함)
+                long totalComments = commentRepository.countByPostId(postId);
 
                 return CommentPageResponse.builder()
                                 .comments(comments)
                                 .currentPage(page)
                                 .totalPages(commentPage.getTotalPages())
-                                .totalComments(commentPage.getTotalElements())
+                                .totalComments(totalComments)
                                 .hasNext(commentPage.hasNext())
                                 .hasPrevious(commentPage.hasPrevious())
                                 .build();
@@ -69,11 +74,23 @@ public class CommentService {
                 Post post = postRepository.findById(postId)
                                 .orElseThrow(() -> new IllegalArgumentException("게시글을 찾을 수 없습니다"));
 
+                Comment parent = null;
+                if (request.getParentId() != null) {
+                        parent = commentRepository.findById(request.getParentId())
+                                        .orElseThrow(() -> new IllegalArgumentException("부모 댓글을 찾을 수 없습니다"));
+
+                        // 2단계까지만 허용 (대댓글의 대댓글 불가)
+                        if (parent.getParent() != null) {
+                                throw new IllegalArgumentException("대댓글에는 답글을 달 수 없습니다");
+                        }
+                }
+
                 Comment comment = Comment.builder()
                                 .content(request.getContent())
                                 .author(author)
                                 .post(post)
                                 .password(request.getPassword())
+                                .parent(parent)
                                 .build();
 
                 Comment savedComment = commentRepository.save(comment);
@@ -117,5 +134,21 @@ public class CommentService {
                                 .likeCount(likeCount)
                                 .dislikeCount(dislikeCount)
                                 .build();
+        }
+
+        // 대댓글 포함 응답 변환
+        private CommentResponse convertToResponseWithReplies(Comment comment, Post post) {
+                CommentResponse response = convertToResponse(comment, post);
+
+                // 대댓글 조회 및 변환
+                List<Comment> replies = commentRepository.findByParentIdOrderByCreatedAtAsc(comment.getId());
+                List<CommentResponse> replyResponses = replies.stream()
+                                .map(reply -> convertToResponse(reply, post))
+                                .collect(Collectors.toList());
+
+                response.setParentId(comment.getParent() != null ? comment.getParent().getId() : null);
+                response.setReplies(replyResponses);
+
+                return response;
         }
 }

@@ -1827,6 +1827,54 @@ body {
     color: white;
 }
 
+/* 답글 버튼 스타일 */
+.comment-vote-btn.reply-btn:hover {
+    border-color: #22c55e;
+    color: #22c55e;
+    background: rgba(34, 197, 94, 0.15);
+}
+
+/* 대댓글 스타일 */
+.reply-comment {
+    margin-left: 40px;
+    margin-top: 12px;
+    padding-left: 15px;
+    border-left: 2px solid var(--border-color);
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 0 8px 8px 0;
+}
+
+.reply-comment .comment-header {
+    padding-top: 8px;
+}
+
+/* 답글 입력 폼 */
+.reply-form {
+    margin-top: 12px;
+    padding: 12px;
+    background: var(--bg-secondary);
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+}
+
+.reply-form .form-textarea {
+    width: 100%;
+    min-height: 60px;
+    margin-bottom: 8px;
+    font-size: 13px;
+}
+
+.reply-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+}
+
+.btn-sm {
+    padding: 6px 12px;
+    font-size: 12px;
+}
+
 /* Random Best Post Refined (Minimalist) */
 .random-best-container {
     margin: 4px 0 12px 0;

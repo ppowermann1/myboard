@@ -14,4 +14,7 @@ public class CommentRequest {
     private String content;
 
     private String password;
+
+    // 대댓글인 경우 부모 댓글 ID
+    private Long parentId;
 }
