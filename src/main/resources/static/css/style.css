@@ -176,28 +176,28 @@ body {
 
 /* Cool Button Style */
 .btn-cool {
-    background: linear-gradient(135deg, #4285f4 0%, #1a73e8 100%);
+    background: #333333;
     color: white !important;
     border: none;
     border-radius: 50px;
-    padding: 12px 28px;
+    padding: 14px 40px;
     font-weight: 700;
-    letter-spacing: 0.8px;
-    box-shadow: 0 4px 15px rgba(66, 133, 244, 0.3);
+    letter-spacing: 1px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
     transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: 8px;
     text-transform: uppercase;
-    font-size: 13px;
+    font-size: 14px;
     cursor: pointer;
 }
 
 .btn-cool:hover {
     transform: translateY(-3px) scale(1.02);
-    box-shadow: 0 8px 25px rgba(66, 133, 244, 0.5);
-    background: linear-gradient(135deg, #5c9aff 0%, #4285f4 100%);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+    background: #444444;
 }
 
 .btn-cool:active {
@@ -306,43 +306,47 @@ body {
 
 /* Forms */
 .form-container {
-    max-width: 500px;
-    margin: 50px auto;
+    max-width: 420px;
+    margin: 60px auto;
     background-color: var(--bg-secondary);
-    padding: var(--spacing-xl);
-    border-radius: var(--radius);
-    box-shadow: var(--shadow-md);
+    padding: 48px 40px;
+    border-radius: 20px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .form-title {
-    font-size: 28px;
+    font-size: 24px;
     font-weight: 700;
-    margin-bottom: var(--spacing-lg);
+    margin-bottom: 32px;
     text-align: center;
     color: var(--text-primary);
+    letter-spacing: -0.5px;
 }
 
 .form-group {
-    margin-bottom: var(--spacing-lg);
+    margin-bottom: 24px;
 }
 
 .form-label {
     display: block;
-    margin-bottom: var(--spacing-sm);
+    margin-bottom: 8px;
+    font-size: 13px;
     font-weight: 600;
     color: var(--text-primary);
+    opacity: 0.9;
 }
 
 .form-input {
     width: 100%;
-    padding: var(--spacing-md);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius);
-    background-color: var(--bg-tertiary);
+    padding: 14px 16px;
+    border: 1px solid #333333;
+    border-radius: 12px;
+    background-color: #1e1e1e;
     color: var(--text-primary);
     font-family: 'Pretendard', sans-serif;
     font-size: 14px;
-    transition: var(--transition);
+    transition: all 0.2s ease;
 }
 
 .form-input:focus {
@@ -361,14 +365,16 @@ body {
 
 .form-link {
     text-align: center;
-    margin-top: var(--spacing-lg);
+    margin-top: 24px;
     color: var(--text-secondary);
+    font-size: 13px;
 }
 
 .form-link a {
     color: var(--accent-primary);
     text-decoration: none;
     font-weight: 600;
+    margin-left: 4px;
 }
 
 .form-link a:hover {
@@ -469,6 +475,7 @@ body {
 }
 
 .form-textarea {
+    width: 100%;
     resize: none;
     min-height: 80px;
     padding: 12px;
@@ -542,32 +549,53 @@ body {
     margin-top: var(--spacing-md);
     margin-bottom: var(--spacing-xxl);
     /* Space for bottom search panel */
-    width: 48px;
-    height: 48px;
+    width: 60px;
+    height: 60px;
     border-radius: 50%;
-    background: var(--bg-tertiary);
-    /* Neutral background */
-    color: var(--text-primary);
-    border: 1px solid var(--border-color);
-    font-size: 20px;
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    /* font-size removed as we use image now */
     cursor: pointer;
-    box-shadow: var(--shadow-sm);
-    transition: var(--transition);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    transition: all 0.3s ease;
     align-items: center;
     justify-content: center;
 }
 
+.css-search-icon {
+    width: 22px;
+    height: 22px;
+    border: 3px solid white;
+    border-radius: 50%;
+    position: relative;
+    margin-left: -4px;
+    margin-top: -4px;
+}
+
+.css-search-icon::after {
+    content: '';
+    position: absolute;
+    width: 3px;
+    height: 14px;
+    background: white;
+    bottom: -10px;
+    right: -6px;
+    transform: rotate(-45deg);
+    border-radius: 2px;
+}
+
 .search-toggle-btn:hover {
-    background-color: var(--bg-secondary);
-    border-color: var(--accent-primary);
-    transform: translateY(-2px);
-    color: var(--accent-primary);
+    transform: translateY(-5px);
+    background: var(--secondary-color);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+    color: white;
 }
 
 .search-toggle-btn.active {
-    background-color: var(--accent-primary);
+    background-color: var(--secondary-color);
     color: white;
-    border-color: var(--accent-primary);
+    transform: rotate(90deg);
 }
 
 /* Bottom Search Container */
@@ -1092,13 +1120,13 @@ body {
     /* Align to top */
     background-color: var(--bg-secondary);
     border-radius: var(--radius);
-    padding: var(--spacing-sm);
+    padding: 10px;
     box-shadow: var(--shadow-sm);
     cursor: pointer;
     transition: transform 0.2s ease, box-shadow 0.2s ease;
     border: 1px solid var(--border-color);
-    height: 110px;
-    /* Fixed height for consistency */
+    height: 85px;
+    /* Reduced height for compactness (77% of original) */
     overflow: hidden;
 }
 
@@ -1120,18 +1148,19 @@ body {
 
 /* Left side thumbnail area */
 .post-thumbnail-area {
-    width: 80px;
-    height: 80px;
+    width: 62px;
+    height: 62px;
     flex-shrink: 0;
-    margin-right: 12px;
+    margin-right: 10px;
     border-radius: 6px;
     overflow: hidden;
     background-color: var(--bg-tertiary);
-    /* Placeholder background */
     display: flex;
     align-items: center;
     justify-content: center;
     border: 1px solid var(--border-color);
+    position: relative;
+    /* For BEST badge overlay */
 }
 
 .post-thumbnail-area img {
@@ -1194,7 +1223,7 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    font-size: 12px;
+    font-size: 11px;
     color: var(--text-secondary);
     margin-top: auto;
     /* Push to bottom */
@@ -1725,7 +1754,41 @@ body {
 
 .best-post-card {
     position: relative;
-    /* Maintain relative for refresh button positioning */
+    /* Maintain relative for refresh button and border positioning */
+    z-index: 1;
+    border: none !important;
+    /* Hide standard border to show animated one */
+    background: var(--bg-secondary) !important;
+}
+
+/* Thick Static Sparkling Border Effect */
+.best-post-card::before {
+    content: '';
+    position: absolute;
+    top: -4px;
+    left: -4px;
+    right: -4px;
+    bottom: -4px;
+    background: linear-gradient(135deg,
+            #ffd700 0%,
+            #fff5b1 20%,
+            #ffd700 40%,
+            #ffffff 50%,
+            #ffd700 60%,
+            #fff5b1 80%,
+            #ffd700 100%);
+    z-index: -1;
+    border-radius: calc(var(--radius) + 4px);
+    filter: contrast(1.2) brightness(1.1);
+}
+
+.best-post-card::after {
+    content: '';
+    position: absolute;
+    inset: 1px;
+    background: var(--bg-secondary);
+    border-radius: var(--radius);
+    z-index: -1;
 }
 
 /* Indicators Styling */
@@ -1736,35 +1799,39 @@ body {
 }
 
 .best-text-badge {
+    position: absolute;
+    top: 3px;
+    left: 3px;
     color: #ffd700;
-    font-size: 10px;
+    font-size: 8px;
     font-weight: 800;
-    margin-right: 6px;
-    padding: 1px 4px;
+    padding: 1px 3px;
     border: 1px solid #ffd700;
-    border-radius: 4px;
-    vertical-align: middle;
-    background: rgba(255, 215, 0, 0.1);
+    border-radius: 3px;
+    background: rgba(0, 0, 0, 0.7);
+    /* Improved contrast for overlay */
+    z-index: 2;
+    box-shadow: 0 0 5px rgba(255, 215, 0, 0.3);
 }
 
 .best-refresh-btn {
     position: absolute;
-    top: 6px;
-    right: 6px;
-    width: 24px;
-    height: 24px;
+    top: 8px;
+    right: 8px;
+    width: 38px;
+    height: 38px;
     border-radius: 50%;
     border: none;
-    background: rgba(255, 107, 0, 0.05);
-    /* Even more subtle */
+    background: rgba(255, 107, 0, 0.1);
     color: #ff6b00;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 10px;
+    font-size: 16px;
     transition: all 0.2s ease;
     z-index: 10;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
 .best-refresh-btn:hover {
@@ -1809,4 +1876,97 @@ body {
     font-size: 14px;
     margin-left: -2px;
     /* Visual centering for plane icon */
+}
+
+/* Board Selection Modal */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+    backdrop-filter: blur(4px);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+
+.modal-overlay.active {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.modal-content {
+    background-color: var(--bg-secondary);
+    padding: 24px;
+    border-radius: 16px;
+    width: 90%;
+    max-width: 320px;
+    box-shadow: var(--shadow-lg);
+    border: 1px solid var(--border-color);
+    text-align: center;
+    transform: scale(0.9);
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.modal-overlay.active .modal-content {
+    transform: scale(1);
+}
+
+.modal-title {
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 20px;
+    color: var(--text-primary);
+}
+
+.board-select-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.btn-board-select {
+    width: 100%;
+    padding: 14px;
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    background-color: var(--bg-tertiary);
+    color: var(--text-primary);
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.btn-board-select:hover {
+    background-color: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
+    transform: translateY(-2px);
+}
+
+.btn-modal-close {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-size: 14px;
+    cursor: pointer;
+    padding: 8px 16px;
+    border-radius: 20px;
+}
+
+.btn-modal-close:hover {
+    color: var(--text-primary);
+    background-color: var(--bg-tertiary);
 }

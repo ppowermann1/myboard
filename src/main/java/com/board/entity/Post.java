@@ -31,8 +31,8 @@ public class Post {
     private Board board;
 
     @NotBlank
-    @Size(max = 200)
-    @Column(nullable = false, length = 200)
+    @Size(max = 100)
+    @Column(nullable = false, length = 100)
     private String title;
 
     @NotBlank

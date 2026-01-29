@@ -32,7 +32,7 @@
         <!-- Board Tabs -->
         <div class="board-tabs">
             <button class="board-tab active" onclick="switchBoard('free')">자유게시판</button>
-            <button class="board-tab" onclick="switchBoard('anonymous')">익명게시판</button>
+            <button class="board-tab" onclick="switchBoard('anonymous')">BLIND</button>
             <button class="board-tab" onclick="switchBoard('jobs')">구인구직</button>
         </div>
 
@@ -52,9 +52,9 @@
 
         <div id="pagination" class="pagination hidden"></div>
 
-        <!-- 검색 토글 버튼 (하단 고정) -->
+        <!-- Search Toggle Button -->
         <button id="searchToggleBtn" class="search-toggle-btn" aria-label="검색">
-            🔍
+            <div class="css-search-icon"></div>
         </button>
 
         <!-- 검색 영역 (기본 숨김) -->
@@ -80,8 +80,8 @@
     </div>
 
     <!-- Floating Write Button -->
-    <button class="floating-write-btn" onclick="goToWritePage()" aria-label="글쓰기">
-        <i class="fas fa-pen"></i>
+    <button class="floating-write-btn" onclick="openBoardModal()" aria-label="글쓰기">
+        <i class="fas fa-edit"></i>
     </button>
 
     <script src="/js/app.js"></script>
@@ -163,7 +163,7 @@
             // Update UI
             document.querySelectorAll('.board-tab').forEach(tab => {
                 tab.classList.remove('active');
-                if (tab.innerText.includes(boardId === 'free' ? '자유' : (boardId === 'anonymous' ? '익명' : '구인'))) {
+                if (tab.innerText.includes(boardId === 'free' ? '자유' : (boardId === 'anonymous' ? 'BLIND' : '구인'))) {
                     tab.classList.add('active');
                 }
             });
@@ -347,9 +347,6 @@
             location.href = `/post-detail.html?id=${postId}`;
         }
 
-        function goToWritePage() {
-            window.location.href = `/post-form.html?boardId=${currentBoardId}`;
-        }
 
         async function loadRandomBestPost() {
             const section = document.getElementById('randomBestSection');
@@ -404,13 +401,13 @@
                         </button>
                         
                         <div class="post-thumbnail-area">
+                            <span class="best-text-badge">BEST</span>
                             ${thumbnailHtml}
                         </div>
                         
                         <div class="post-content-area">
                             <div class="mobile-post-header">
                                 <h3 class="mobile-post-title">
-                                    <span class="best-text-badge">BEST</span>
                                     ${post.title}
                                 </h3>
                             </div>
@@ -438,9 +435,64 @@
                 document.getElementById('randomBestSection').classList.add('hidden');
             }
         }
+
+        // Board Selection Modal Logic
+        function openBoardModal() {
+            if (!currentUser) {
+                alert('로그인이 필요한 서비스입니다.');
+                location.href = '/login.html';
+                return;
+            }
+            const modal = document.getElementById('boardSelectModal');
+            modal.classList.remove('hidden');
+            // Small delay to allow display:flex to apply before opacity transition
+            modal.style.display = 'flex';
+            setTimeout(() => {
+                modal.classList.add('active');
+            }, 10);
+        }
+
+        function closeBoardModal() {
+            const modal = document.getElementById('boardSelectModal');
+            modal.classList.remove('active');
+            setTimeout(() => {
+                modal.style.display = 'none';
+                modal.classList.add('hidden');
+            }, 300);
+        }
+
+        function selectBoardAndWrite(boardId) {
+            location.href = `/post-form.html?boardId=${boardId}`;
+        }
+
+        // Close modal when clicking outside
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('boardSelectModal').addEventListener('click', (e) => {
+                if (e.target.id === 'boardSelectModal') {
+                    closeBoardModal();
+                }
+            });
+        });
+
         document.getElementById('logoutBtn').addEventListener('click', logout);
         init();
     </script>
-</body>
+    <div id="boardSelectModal" class="modal-overlay">
+        <div class="modal-content">
+            <h3 class="modal-title">게시판 선택</h3>
+            <div class="board-select-buttons">
+                <button class="btn-board-select" onclick="selectBoardAndWrite('free')">
+                    <i class="fas fa-comment-alt"></i> 자유게시판
+                </button>
+                <button class="btn-board-select" onclick="selectBoardAndWrite('anonymous')">
+                    <i class="fas fa-user-secret"></i> BLIND
+                </button>
+                <button class="btn-board-select" onclick="selectBoardAndWrite('jobs')">
+                    <i class="fas fa-briefcase"></i> 구인구직
+                </button>
+            </div>
+            <button class="btn-modal-close" onclick="closeBoardModal()">닫기</button>
+        </div>
+    </div>
 
 </html>

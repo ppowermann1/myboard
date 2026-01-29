@@ -37,7 +37,7 @@ public interface PostRepository extends JpaRepository<Post, Long> {
         // 랜덤 베스트: 시간 범위 및 게시판 내 추천수 상위 게시글 조회
         @Query("SELECT p FROM Post p LEFT JOIN p.postVotes v ON v.voteType = :voteType " +
                         "WHERE p.board.id = :boardId AND p.createdAt >= :startTime AND p.createdAt < :endTime " +
-                        "GROUP BY p ORDER BY COUNT(v) DESC, p.createdAt DESC")
+                        "GROUP BY p HAVING COUNT(v) >= 3 ORDER BY COUNT(v) DESC, p.createdAt DESC")
         List<Post> findTopPostsByLikeCountInTimeRange(
                         @Param("boardId") String boardId,
                         @Param("startTime") LocalDateTime startTime,

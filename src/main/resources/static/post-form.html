@@ -26,8 +26,8 @@
             <form id="postForm">
                 <div class="form-group">
                     <label class="form-label" for="title">제목</label>
-                    <input type="text" id="title" class="form-input" placeholder="제목을 입력하세요 (최대 200자)" required
-                        maxlength="200">
+                    <input type="text" id="title" class="form-input" placeholder="제목을 입력하세요 (최대 100자)" required
+                        maxlength="100">
                 </div>
 
                 <div class="form-group">
@@ -141,6 +141,12 @@
                 isEditMode = true;
                 document.getElementById('formTitle').textContent = '게시글 수정';
                 await loadPost();
+            } else {
+                // New post: Set title based on boardId
+                let boardName = '자유게시판';
+                if (boardId === 'anonymous') boardName = 'BLIND';
+                else if (boardId === 'jobs') boardName = '구인구직';
+                document.getElementById('formTitle').textContent = `${boardName} 글쓰기`;
             }
         }
 
