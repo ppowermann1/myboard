@@ -75,6 +75,10 @@ public class Post {
     @Builder.Default
     private List<AnonymousMapping> anonymousMappings = new ArrayList<>();
 
+    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<PostVote> postVotes = new ArrayList<>();
+
     public void incrementViewCount() {
         this.viewCount++;
     }

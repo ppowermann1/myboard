@@ -36,6 +36,11 @@
             <button class="board-tab" onclick="switchBoard('jobs')">구인구직</button>
         </div>
 
+        <!-- Random Best Post Section (Moved below tabs) -->
+        <div id="randomBestSection" class="random-best-container hidden">
+            <div id="randomBestContent"></div>
+        </div>
+
         <div id="postsContainer" class="mobile-post-list">
             <div class="loading">게시글을 불러오는 중...</div>
         </div>
@@ -115,6 +120,9 @@
             // Load posts
             await loadPosts(0);
 
+            // Load random best post
+            await loadRandomBestPost();
+
             // Setup search toggle
             document.getElementById('searchToggleBtn').addEventListener('click', toggleSearch);
             document.getElementById('closeSearchBtn').addEventListener('click', closeSearch);
@@ -149,16 +157,21 @@
 
         async function switchBoard(boardId) {
             currentBoardId = boardId;
+            currentPage = 0;
             currentKeyword = '';
-            currentSearchType = '';
-            document.getElementById('searchKeyword').value = '';
 
             // Update UI
             document.querySelectorAll('.board-tab').forEach(tab => {
-                tab.classList.toggle('active', tab.getAttribute('onclick').includes(`'${boardId}'`));
+                tab.classList.remove('active');
+                if (tab.innerText.includes(boardId === 'free' ? '자유' : (boardId === 'anonymous' ? '익명' : '구인'))) {
+                    tab.classList.add('active');
+                }
             });
 
-            await loadPosts(0);
+            await Promise.all([
+                loadPosts(0),
+                loadRandomBestPost()
+            ]);
         }
 
         async function performSearch() {
@@ -259,6 +272,8 @@
                                 <span>${timeString}</span>
                             </div>
                             <div class="post-meta-right">
+                                <span><i class="fas fa-thumbs-up"></i> ${formatNumber(post.likeCount || 0)}</span>
+                                <span><i class="fas fa-thumbs-down"></i> ${formatNumber(post.dislikeCount || 0)}</span>
                                 <span><i class="fas fa-eye"></i> ${formatNumber(post.viewCount || 0)}</span>
                                 <span><i class="fas fa-comment-dots"></i> ${formatNumber(post.commentCount || 0)}</span>
                             </div>
@@ -321,6 +336,87 @@
             window.location.href = `/post-form.html?boardId=${currentBoardId}`;
         }
 
+        async function loadRandomBestPost() {
+            const section = document.getElementById('randomBestSection');
+
+            // 'jobs' board does not show best posts
+            if (currentBoardId === 'jobs') {
+                section.classList.add('hidden');
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/best/random?boardId=${currentBoardId}`, {
+                    credentials: 'include'
+                });
+
+                if (response.status === 204) {
+                    document.getElementById('randomBestSection').classList.add('hidden');
+                    return;
+                }
+
+                if (!response.ok) {
+                    document.getElementById('randomBestSection').classList.add('hidden');
+                    return;
+                }
+
+                const post = await response.json();
+                const section = document.getElementById('randomBestSection');
+                const content = document.getElementById('randomBestContent');
+
+                section.classList.remove('hidden');
+
+                const date = new Date(post.createdAt);
+                const timeString = formatTimeAgo(date);
+                const displayNickname = post.authorAnonymousNickname || post.authorNickname || '익명';
+
+                // Replicate createMobilePostCard structure for consistency
+                let thumbnailHtml;
+                if (post.imageUrl) {
+                    thumbnailHtml = `<img src="${post.imageUrl}" alt="thumbnail" loading="lazy">`;
+                } else {
+                    thumbnailHtml = `<div class="post-thumbnail-placeholder"><span>No</span><span>Image</span></div>`;
+                }
+
+                content.innerHTML = `
+                    <div class="mobile-post-card best-post-card" onclick="location.href='/post-detail.html?id=${post.id}'">
+                        <button class="best-refresh-btn" onclick="event.stopPropagation(); loadRandomBestPost()" aria-label="새로고침">
+                            <i class="fas fa-sync-alt"></i>
+                        </button>
+                        
+                        <div class="post-thumbnail-area">
+                            ${thumbnailHtml}
+                        </div>
+                        
+                        <div class="post-content-area">
+                            <div class="mobile-post-header">
+                                <h3 class="mobile-post-title">
+                                    <span class="best-text-badge">BEST</span>
+                                    ${post.title}
+                                </h3>
+                            </div>
+                            
+                            <div class="mobile-post-footer">
+                                <div class="post-meta-left">
+                                    ${post.authorRole === 'ADMIN' ?
+                        `<span class="admin-nickname-container"><i class="fas fa-camera"></i> ${escapeHtml(displayNickname)}</span>` :
+                        `<span class="user-nickname-badge"><i class="fas fa-user"></i> ${escapeHtml(displayNickname)}</span>`
+                    }
+                                    <span>${timeString}</span>
+                                </div>
+                                <div class="post-meta-right">
+                                    <span class="best-like-count"><i class="fas fa-thumbs-up"></i> ${post.likeCount || 0}</span>
+                                    <span><i class="fas fa-eye"></i> ${formatNumber(post.viewCount || 0)}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } catch (error) {
+                console.error('Error loading random best post:', error);
+                document.getElementById('randomBestSection').classList.add('hidden');
+            }
+        }
         document.getElementById('logoutBtn').addEventListener('click', logout);
         init();
     </script>

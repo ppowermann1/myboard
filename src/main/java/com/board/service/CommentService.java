@@ -7,7 +7,9 @@ import com.board.entity.Comment;
 import com.board.entity.Post;
 import com.board.entity.Role;
 import com.board.entity.User;
+import com.board.entity.VoteType;
 import com.board.repository.CommentRepository;
+import com.board.repository.CommentVoteRepository;
 import com.board.repository.PostRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -29,6 +31,7 @@ public class CommentService {
         private final CommentRepository commentRepository;
         private final PostRepository postRepository;
         private final AnonymousNicknameService anonymousNicknameService;
+        private final CommentVoteRepository commentVoteRepository;
 
         public List<CommentResponse> getCommentsByPostId(Long postId) {
                 Post post = postRepository.findById(postId)
@@ -98,6 +101,10 @@ public class CommentService {
                         anonymousNickname = anonymousNicknameService.getOrAssignNickname(post, comment.getAuthor());
                 }
 
+                // 투표 정보 조회
+                long likeCount = commentVoteRepository.countByCommentAndVoteType(comment, VoteType.LIKE);
+                long dislikeCount = commentVoteRepository.countByCommentAndVoteType(comment, VoteType.DISLIKE);
+
                 return CommentResponse.builder()
                                 .id(comment.getId())
                                 .content(comment.getContent())
@@ -107,6 +114,8 @@ public class CommentService {
                                 .anonymousNickname(anonymousNickname)
                                 .isAuthor(isAuthor)
                                 .createdAt(comment.getCreatedAt().toString())
+                                .likeCount(likeCount)
+                                .dislikeCount(dislikeCount)
                                 .build();
         }
 }

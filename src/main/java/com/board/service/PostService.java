@@ -6,8 +6,10 @@ import com.board.entity.Board;
 import com.board.entity.Post;
 import com.board.entity.Role;
 import com.board.entity.User;
+import com.board.entity.VoteType;
 import com.board.repository.BoardRepository;
 import com.board.repository.PostRepository;
+import com.board.repository.PostVoteRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,6 +34,7 @@ public class PostService {
     private final BoardRepository boardRepository;
     private final FileService fileService;
     private final AnonymousNicknameService anonymousNicknameService;
+    private final PostVoteRepository postVoteRepository;
 
     @Transactional
     public Map<String, Object> getAllPosts(String boardId, int page, int size) {
@@ -206,6 +209,10 @@ public class PostService {
             authorAnonymousNickname = anonymousNicknameService.getOrAssignNickname(post, post.getAuthor());
         }
 
+        // 투표 정보 조회
+        long likeCount = postVoteRepository.countByPostAndVoteType(post, VoteType.LIKE);
+        long dislikeCount = postVoteRepository.countByPostAndVoteType(post, VoteType.DISLIKE);
+
         return PostResponse.builder()
                 .id(post.getId())
                 .boardId(post.getBoard().getId())
@@ -222,6 +229,8 @@ public class PostService {
                 .createdAt(post.getCreatedAt())
                 .updatedAt(post.getUpdatedAt())
                 .commentCount(post.getComments().size())
+                .likeCount(likeCount)
+                .dislikeCount(dislikeCount)
                 .build();
     }
 }

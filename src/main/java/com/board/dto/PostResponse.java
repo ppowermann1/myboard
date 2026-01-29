@@ -27,4 +27,9 @@ public class PostResponse {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private int commentCount;
+
+    // 추천/반대 투표 정보
+    private long likeCount;
+    private long dislikeCount;
+    private String currentUserVote; // "LIKE", "DISLIKE", or null
 }

@@ -133,6 +133,22 @@
                     ${post.imageUrl3 ? `<img src="${post.imageUrl3}" alt="Post Image 3" onclick="openLightbox('${post.imageUrl3}')">` : ''}
                 </div>
                 <div class="post-detail-content">${parseContent(post.content)}</div>
+                
+                <!-- 추천/반대 투표 버튼 -->
+                <div class="vote-section" id="postVoteSection">
+                    <button class="vote-btn like-btn ${post.currentUserVote === 'LIKE' ? 'active' : ''}" 
+                            onclick="handlePostVote('LIKE')" 
+                            data-type="LIKE">
+                        <i class="fas fa-thumbs-up"></i>
+                        <span class="vote-count" id="postLikeCount">${post.likeCount || 0}</span>
+                    </button>
+                    <button class="vote-btn dislike-btn ${post.currentUserVote === 'DISLIKE' ? 'active' : ''}" 
+                            onclick="handlePostVote('DISLIKE')" 
+                            data-type="DISLIKE">
+                        <i class="fas fa-thumbs-down"></i>
+                        <span class="vote-count" id="postDislikeCount">${post.dislikeCount || 0}</span>
+                    </button>
+                </div>
             `;
         }
 
@@ -194,6 +210,22 @@
                             ` : ''}
                         </div>
                         <div class="comment-content">${parseContent(comment.content)}</div>
+                        
+                        <!-- 댓글 투표 버튼 -->
+                        <div class="comment-vote-section">
+                            <button class="comment-vote-btn like-btn ${comment.currentUserVote === 'LIKE' ? 'active' : ''}" 
+                                    onclick="handleCommentVote(${comment.id}, 'LIKE')"
+                                    data-comment-id="${comment.id}">
+                                <i class="fas fa-thumbs-up"></i>
+                                <span id="commentLike-${comment.id}">${comment.likeCount || 0}</span>
+                            </button>
+                            <button class="comment-vote-btn dislike-btn ${comment.currentUserVote === 'DISLIKE' ? 'active' : ''}" 
+                                    onclick="handleCommentVote(${comment.id}, 'DISLIKE')"
+                                    data-comment-id="${comment.id}">
+                                <i class="fas fa-thumbs-down"></i>
+                                <span id="commentDislike-${comment.id}">${comment.dislikeCount || 0}</span>
+                            </button>
+                        </div>
                     </div>
                 `;
             }).join('');
@@ -317,8 +349,55 @@
             document.body.style.overflow = ''; // Restore scrolling
         }
 
-        // Expose openLightbox to global scope for inline onclick
+        // Vote handlers
+        async function handlePostVote(type) {
+            if (!currentUser) {
+                showError('로그인이 필요합니다');
+                return;
+            }
+            try {
+                const result = await votePost(postId, type);
+                // Update UI
+                document.getElementById('postLikeCount').textContent = result.likeCount;
+                document.getElementById('postDislikeCount').textContent = result.dislikeCount;
+
+                // Update button states
+                const likeBtn = document.querySelector('.vote-btn.like-btn');
+                const dislikeBtn = document.querySelector('.vote-btn.dislike-btn');
+
+                likeBtn.classList.toggle('active', result.currentUserVote === 'LIKE');
+                dislikeBtn.classList.toggle('active', result.currentUserVote === 'DISLIKE');
+            } catch (error) {
+                showError('투표 처리 중 오류가 발생했습니다');
+            }
+        }
+
+        async function handleCommentVote(commentId, type) {
+            if (!currentUser) {
+                showError('로그인이 필요합니다');
+                return;
+            }
+            try {
+                const result = await voteComment(commentId, type);
+                // Update UI
+                document.getElementById(`commentLike-${commentId}`).textContent = result.likeCount;
+                document.getElementById(`commentDislike-${commentId}`).textContent = result.dislikeCount;
+
+                // Update button states
+                const likeBtn = document.querySelector(`[data-comment-id="${commentId}"].like-btn`);
+                const dislikeBtn = document.querySelector(`[data-comment-id="${commentId}"].dislike-btn`);
+
+                if (likeBtn) likeBtn.classList.toggle('active', result.currentUserVote === 'LIKE');
+                if (dislikeBtn) dislikeBtn.classList.toggle('active', result.currentUserVote === 'DISLIKE');
+            } catch (error) {
+                showError('투표 처리 중 오류가 발생했습니다');
+            }
+        }
+
+        // Expose functions to global scope for inline onclick
         window.openLightbox = openLightbox;
+        window.handlePostVote = handlePostVote;
+        window.handleCommentVote = handleCommentVote;
 
         init();
     </script>

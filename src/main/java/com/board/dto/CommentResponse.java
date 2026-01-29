@@ -23,4 +23,9 @@ public class CommentResponse {
     private boolean isAuthor; // 글 작성자 여부
 
     private String createdAt;
+
+    // 추천/반대 투표 정보
+    private long likeCount;
+    private long dislikeCount;
+    private String currentUserVote; // "LIKE", "DISLIKE", or null
 }

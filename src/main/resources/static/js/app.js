@@ -255,3 +255,36 @@ function showError(message) {
 function showSuccess(message) {
     alert(message);
 }
+
+// Vote Functions
+async function votePost(postId, type) {
+    try {
+        const response = await fetch(`${API_BASE}/votes/posts/${postId}?type=${type}`, {
+            method: 'POST',
+            credentials: 'include'
+        });
+        if (!response.ok) {
+            throw new Error('투표 실패');
+        }
+        return await response.json();
+    } catch (error) {
+        console.error('Vote post error:', error);
+        throw error;
+    }
+}
+
+async function voteComment(commentId, type) {
+    try {
+        const response = await fetch(`${API_BASE}/votes/comments/${commentId}?type=${type}`, {
+            method: 'POST',
+            credentials: 'include'
+        });
+        if (!response.ok) {
+            throw new Error('투표 실패');
+        }
+        return await response.json();
+    } catch (error) {
+        console.error('Vote comment error:', error);
+        throw error;
+    }
+}
