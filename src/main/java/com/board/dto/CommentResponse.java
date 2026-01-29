@@ -28,4 +28,9 @@ public class CommentResponse {
     private long likeCount;
     private long dislikeCount;
     private String currentUserVote; // "LIKE", "DISLIKE", or null
+
+    // 대댓글 정보
+    private Long parentId;
+    @Builder.Default
+    private java.util.List<CommentResponse> replies = new java.util.ArrayList<>();
 }

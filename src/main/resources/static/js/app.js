@@ -186,8 +186,34 @@ async function deleteComment(id) {
 
 // Utility Functions
 // Helper Functions
+function escapeHtml(text) {
+    if (!text) return '';
+    const map = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+    };
+    return text.toString().replace(/[&<>"']/g, function (m) { return map[m]; });
+}
+
 function formatTimeAgo(dateString) {
-    const date = new Date(dateString);
+    if (!dateString) return '';
+
+    // Handle nanoseconds if present (safari/legacy compatibility)
+    // If string ends with 6 digits microseconds, trim last 3? 
+    // Actually most browsers handle it, but to be safe:
+    let safeDateString = dateString;
+
+    // If it's a string, try to parse
+    const date = new Date(safeDateString);
+
+    if (isNaN(date.getTime())) {
+        console.error('Invalid date:', dateString);
+        return '';
+    }
+
     const now = new Date();
     const diff = now - date;
     const minutes = Math.floor(diff / 60000);
@@ -230,7 +256,9 @@ function parseContent(text) {
 }
 
 function isNewPost(dateString) {
+    if (!dateString) return false;
     const date = new Date(dateString);
+    if (isNaN(date.getTime())) return false;
     const now = new Date();
     // Consider new if within 24 hours
     return (now - date) < 86400000;

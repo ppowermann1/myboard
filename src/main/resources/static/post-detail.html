@@ -65,12 +65,12 @@
                 return;
             }
 
-            // Check authentication
+            // Check authentication (optional for viewing)
             currentUser = await getCurrentUser();
-            if (!currentUser) {
-                window.location.href = '/login.html';
-                return;
-            }
+            // if (!currentUser) {
+            //     window.location.href = '/login.html';
+            //     return;
+            // }
 
             // Load post and comments
             await loadPost();
@@ -79,78 +79,111 @@
             // Show comment form
             document.getElementById('commentForm').classList.remove('hidden');
 
+            // Setup comment form
+            document.getElementById('commentForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                if (!currentUser) {
+                    showError('로그인이 필요합니다');
+                    return;
+                }
+
+                const contentInput = document.getElementById('commentContent');
+                const content = contentInput.value.trim();
+
+                if (!content) {
+                    showError('내용을 입력해주세요');
+                    return;
+                }
+
+                try {
+                    await createComment(postId, content);
+                    contentInput.value = '';
+                    await loadComments();
+                    showSuccess('댓글이 등록되었습니다');
+                } catch (error) {
+                    console.error('Comment creation failed:', error);
+                    showError('댓글 작성에 실패했습니다');
+                }
+            });
+
             setupLightbox();
         }
 
         async function loadPost() {
-            const post = await getPost(postId);
-            if (!post) {
-                showError('게시글을 찾을 수 없습니다');
-                window.location.href = '/';
-                return;
-            }
+            try {
+                const post = await getPost(postId);
+                console.log('Loaded post:', post); // Debug log
 
-            currentPost = post;
-            const authorName = post.authorNickname || post.authorUsername || '익명';
-
-            // Check permissions
-            const isOwner = currentUser && post.authorUsername === currentUser.username;
-            const isAdmin = currentUser && currentUser.role === 'ADMIN';
-            const showActions = isOwner || isAdmin;
-
-            const isAnonymousBoard = post.boardId === 'anonymous';
-            const topAuthorClass = (isAnonymousBoard && post.authorRole !== 'ADMIN') ? ' post-author' : '';
-
-            document.getElementById('postContent').innerHTML = `
-                <div class="post-detail-header">
-                    <div class="avatar"><i class="fas fa-user"></i></div>
-                    <div class="post-author-row">
-                        <div class="author-info">
-                            ${post.authorRole === 'ADMIN' ?
-                    `<span class="admin-nickname-container"><i class="fas fa-camera"></i> ${post.authorAnonymousNickname || post.authorNickname}</span>` :
-                    `<span class="user-nickname-badge${topAuthorClass}"><i class="fas fa-user"></i> ${post.authorAnonymousNickname || post.authorNickname}</span>`
+                if (!post) {
+                    throw new Error('Post not found or API error');
                 }
-                            <span class="view-count-detail"><i class="fas fa-eye"></i> ${formatNumber(post.viewCount)}</span>
-                            
-                            ${showActions ? `
-                            <div class="post-actions">
-                                ${isOwner ? `
-                                <button class="icon-btn primary" onclick="goToEditPage()" aria-label="수정" style="width: 38px; height: 38px; font-size: 16px;">
-                                    <i class="fas fa-pen"></i>
-                                </button>` : ''}
-                                <button class="icon-btn danger" onclick="handleDeletePost()" aria-label="삭제" style="width: 38px; height: 38px; font-size: 16px;">
-                                    <i class="fas fa-trash"></i>
-                                </button>
+
+                currentPost = post;
+                // ... (rest of the rendering logic) ...
+                const authorName = post.authorNickname || post.authorUsername || '익명';
+
+                // Check permissions
+                const isOwner = currentUser && post.authorUsername === currentUser.username;
+                const isAdmin = currentUser && currentUser.role === 'ADMIN';
+                const showActions = isOwner || isAdmin;
+
+                const isAnonymousBoard = post.boardId === 'anonymous';
+                const topAuthorClass = (isAnonymousBoard && post.authorRole !== 'ADMIN') ? ' post-author' : '';
+
+                document.getElementById('postContent').innerHTML = `
+                    <div class="post-detail-header">
+                        <div class="avatar"><i class="fas fa-user"></i></div>
+                        <div class="post-author-row">
+                            <div class="author-info">
+                                ${post.authorRole === 'ADMIN' ?
+                        `<span class="admin-nickname-container"><i class="fas fa-camera"></i> ${post.authorAnonymousNickname || post.authorNickname}</span>` :
+                        `<span class="user-nickname-badge${topAuthorClass}"><i class="fas fa-user"></i> ${post.authorAnonymousNickname || post.authorNickname}</span>`
+                    }
+                                <span class="view-count-detail"><i class="fas fa-eye"></i> ${formatNumber(post.viewCount)}</span>
+                                
+                                ${showActions ? `
+                                <div class="post-actions">
+                                    ${isOwner ? `
+                                    <button class="icon-btn primary" onclick="goToEditPage()" aria-label="수정" style="width: 38px; height: 38px; font-size: 16px;">
+                                        <i class="fas fa-pen"></i>
+                                    </button>` : ''}
+                                    <button class="icon-btn danger" onclick="handleDeletePost()" aria-label="삭제" style="width: 38px; height: 38px; font-size: 16px;">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                                ` : ''}
                             </div>
-                            ` : ''}
+                            <div class="post-date">${formatDate(post.createdAt)}</div>
                         </div>
-                        <div class="post-date">${formatDate(post.createdAt)}</div>
                     </div>
-                </div>
-                <h1 class="post-detail-title">${escapeHtml(post.title)}</h1>
-                <div class="post-detail-images">
-                    ${post.imageUrl ? `<img src="${post.imageUrl}" alt="Post Image 1" onclick="openLightbox('${post.imageUrl}')">` : ''}
-                    ${post.imageUrl2 ? `<img src="${post.imageUrl2}" alt="Post Image 2" onclick="openLightbox('${post.imageUrl2}')">` : ''}
-                    ${post.imageUrl3 ? `<img src="${post.imageUrl3}" alt="Post Image 3" onclick="openLightbox('${post.imageUrl3}')">` : ''}
-                </div>
-                <div class="post-detail-content">${parseContent(post.content)}</div>
-                
-                <!-- 추천/반대 투표 버튼 -->
-                <div class="vote-section" id="postVoteSection">
-                    <button class="vote-btn like-btn ${post.currentUserVote === 'LIKE' ? 'active' : ''}" 
-                            onclick="handlePostVote('LIKE')" 
-                            data-type="LIKE">
-                        <i class="fas fa-thumbs-up"></i>
-                        <span class="vote-count" id="postLikeCount">${post.likeCount || 0}</span>
-                    </button>
-                    <button class="vote-btn dislike-btn ${post.currentUserVote === 'DISLIKE' ? 'active' : ''}" 
-                            onclick="handlePostVote('DISLIKE')" 
-                            data-type="DISLIKE">
-                        <i class="fas fa-thumbs-down"></i>
-                        <span class="vote-count" id="postDislikeCount">${post.dislikeCount || 0}</span>
-                    </button>
-                </div>
-            `;
+                    <h1 class="post-detail-title">${escapeHtml(post.title)}</h1>
+                    <div class="post-detail-images">
+                        ${post.imageUrl ? `<img src="${post.imageUrl}" alt="Post Image 1" onclick="openLightbox('${post.imageUrl}')">` : ''}
+                        ${post.imageUrl2 ? `<img src="${post.imageUrl2}" alt="Post Image 2" onclick="openLightbox('${post.imageUrl2}')">` : ''}
+                        ${post.imageUrl3 ? `<img src="${post.imageUrl3}" alt="Post Image 3" onclick="openLightbox('${post.imageUrl3}')">` : ''}
+                    </div>
+                    <div class="post-detail-content">${parseContent(post.content)}</div>
+                    
+                    <!-- 추천/반대 투표 버튼 -->
+                    <div class="vote-section" id="postVoteSection">
+                        <button class="vote-btn like-btn ${post.currentUserVote === 'LIKE' ? 'active' : ''}" 
+                                onclick="handlePostVote('LIKE')" 
+                                data-type="LIKE">
+                            <i class="fas fa-thumbs-up"></i>
+                            <span class="vote-count" id="postLikeCount">${post.likeCount || 0}</span>
+                        </button>
+                        <button class="vote-btn dislike-btn ${post.currentUserVote === 'DISLIKE' ? 'active' : ''}" 
+                                onclick="handlePostVote('DISLIKE')" 
+                                data-type="DISLIKE">
+                            <i class="fas fa-thumbs-down"></i>
+                            <span class="vote-count" id="postDislikeCount">${post.dislikeCount || 0}</span>
+                        </button>
+                    </div>
+                `;
+            } catch (error) {
+                console.error('Error loading post:', error);
+                document.getElementById('postContent').innerHTML = `<div class="error-state">게시글을 불러오는 중 오류가 발생했습니다.<br>${error.message}</div>`;
+            }
         }
 
         let currentCommentPage = 0;
@@ -161,20 +194,20 @@
             const container = document.getElementById('commentsContainer');
             document.getElementById('commentCount').textContent = data.totalComments;
 
-            // Update user info (assuming there's an element with id 'userInfo' somewhere)
-            if (currentUser.role === 'ADMIN') {
+            // Update user info
+            if (currentUser && currentUser.role === 'ADMIN') {
                 const userInfoElement = document.getElementById('userInfo');
                 if (userInfoElement) {
                     userInfoElement.innerHTML = `<span class="admin-nickname-container"><i class="fas fa-camera"></i> ${currentUser.nickname}</span>`;
                 }
-            } else {
+            } else if (currentUser) {
                 const userInfoElement = document.getElementById('userInfo');
                 if (userInfoElement) {
                     userInfoElement.textContent = currentUser.nickname;
                 }
             }
 
-            if (data.comments.length === 0 && page === 0) {
+            if (!data || !data.comments || (data.comments.length === 0 && page === 0)) {
                 container.innerHTML = '<div class="empty-state">아직 댓글이 없습니다</div>';
                 return;
             }
@@ -249,46 +282,6 @@
 
             container.innerHTML = html;
         }
-
-        function escapeHtml(text) {
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
-        }
-
-        document.getElementById('commentForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-
-            const content = document.getElementById('commentContent').value;
-
-            try {
-                await createComment(postId, content);
-                document.getElementById('commentContent').value = '';
-                await loadComments();
-                showSuccess('댓글이 작성되었습니다');
-            } catch (error) {
-                showError('댓글 작성에 실패했습니다');
-            }
-        });
-
-        function goToEditPage() {
-            window.location.href = `/post-form.html?id=${postId}`;
-        }
-
-        async function handleDeletePost() {
-            if (confirm('정말 삭제하시겠습니까?')) {
-                const success = await deletePost(postId);
-                if (success) {
-                    showSuccess('게시글이 삭제되었습니다');
-                    window.location.href = '/';
-                } else {
-                    showError('게시글 삭제에 실패했습니다');
-                }
-            }
-        }
-
-        window.goToEditPage = goToEditPage;
-        window.handleDeletePost = handleDeletePost;
 
         async function handleDeleteComment(commentId) {
             if (confirm('댓글을 삭제하시겠습니까?')) {

@@ -214,7 +214,17 @@
                 const response = await fetch(url, {
                     credentials: 'include'
                 });
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
                 const data = await response.json();
+                console.log('LoadPosts response data:', data);
+
+                if (!data || !Array.isArray(data.posts)) {
+                    console.error('Invalid data structure:', data);
+                    container.innerHTML = '<div class="empty-state">데이터를 불러올 수 없습니다.</div>';
+                    return;
+                }
 
                 if (data.posts.length === 0) {
                     container.innerHTML = '';
@@ -227,13 +237,21 @@
                 currentPage = data.currentPage;
 
                 // Render posts as mobile cards
-                container.innerHTML = data.posts.map(post => createMobilePostCard(post)).join('');
+                container.innerHTML = data.posts.map(post => {
+                    try {
+                        return createMobilePostCard(post);
+                    } catch (e) {
+                        console.error('Error creating post card:', post, e);
+                        return '';
+                    }
+                }).join('');
 
                 // Render pagination
                 renderPagination(data.currentPage, data.totalPages);
             } catch (error) {
                 console.error('Error loading posts:', error);
-                showError('게시글을 불러오는 중 오류가 발생했습니다');
+                // showError('게시글을 불러오는 중 오류가 발생했습니다'); 
+                container.innerHTML = `<div class="empty-state">오류 발생: ${error.message}</div>`;
             }
         }
 
