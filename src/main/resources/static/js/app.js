@@ -212,8 +212,8 @@ function parseContent(text) {
     escaped = escaped.replace(/\n/g, '<br>');
 
     // 3. YouTube Embedding Logic
-    // Detect youtube.com/watch?v=... and youtu.be/...
-    const youtubeRegex = /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})(?:[^\s]*)/g;
+    // Handles watch?v=, youtu.be/, shorts/, embed/, v/, live/
+    const youtubeRegex = /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:watch\?v=|shorts\/|v\/|embed\/|live\/|watch\?.+&v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})(?:\S+)?/g;
 
     return escaped.replace(youtubeRegex, (match, videoId) => {
         return `

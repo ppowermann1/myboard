@@ -184,7 +184,7 @@
                                 </button>
                             ` : ''}
                         </div>
-                        <div class="comment-content">${escapeHtml(comment.content)}</div>
+                        <div class="comment-content">${parseContent(comment.content)}</div>
                     </div>
                 `;
             }).join('');

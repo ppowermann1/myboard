@@ -2,9 +2,11 @@ package com.board.service;
 
 import com.board.dto.PostRequest;
 import com.board.dto.PostResponse;
+import com.board.entity.Board;
 import com.board.entity.Post;
 import com.board.entity.Role;
 import com.board.entity.User;
+import com.board.repository.BoardRepository;
 import com.board.repository.PostRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -27,6 +29,7 @@ import org.springframework.data.domain.Sort;
 public class PostService {
 
     private final PostRepository postRepository;
+    private final BoardRepository boardRepository;
     private final FileService fileService;
 
     public Map<String, Object> getAllPosts(String boardId, int page, int size) {
@@ -111,9 +114,12 @@ public class PostService {
             }
         }
 
+        Board board = boardRepository.findById(request.getBoardId() != null ? request.getBoardId() : "free")
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 게시판입니다."));
+
         Post post = Post.builder()
                 .title(request.getTitle())
-                .boardId(request.getBoardId() != null ? request.getBoardId() : "free")
+                .board(board)
                 .content(request.getContent())
                 .author(author)
                 .password(request.getPassword())
@@ -191,7 +197,7 @@ public class PostService {
     private PostResponse convertToResponse(Post post) {
         return PostResponse.builder()
                 .id(post.getId())
-                .boardId(post.getBoardId())
+                .boardId(post.getBoard().getId())
                 .title(post.getTitle())
                 .content(post.getContent())
                 .authorUsername(post.getAuthor().getUsername())
