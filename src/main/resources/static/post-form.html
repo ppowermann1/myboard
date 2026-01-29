@@ -37,10 +37,13 @@
                 </div>
 
                 <div class="form-group">
-                    <label class="form-label" for="images">이미지 첨부 (최대 3장)</label>
-                    <div class="image-upload-container">
-                        <input type="file" id="images" class="form-input" accept="image/*" multiple
-                            onchange="handleImageSelect(this)">
+                    <label class="form-label">이미지 첨부 (최대 3장)</label>
+                    <div class="image-upload-wrapper">
+                        <label for="images" class="custom-file-upload">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                            <span>클릭하여 사진 선택 (최대 3장)</span>
+                        </label>
+                        <input type="file" id="images" accept="image/*" multiple onchange="handleImageSelect(this)">
                         <div id="imagePreviewContainer" class="multi-image-preview-container">
                             <!-- Previews will be added here -->
                         </div>
@@ -48,7 +51,7 @@
                 </div>
 
                 <div style="display: flex; gap: 16px;">
-                    <button type="submit" class="btn btn-primary" style="flex: 1;">
+                    <button type="submit" class="btn btn-green" style="flex: 1;">
                         저장
                     </button>
                     <button type="button" class="btn btn-secondary" onclick="history.back()">
