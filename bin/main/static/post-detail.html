@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>게시글 상세 - OFF THE RECORD</title>
+    <link rel="stylesheet" href="/css/style.css?v=7">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+
+<body>
+    <header class="header">
+        <div class="header-content">
+            <a href="/" class="logo">
+                OFF THE RECORD
+            </a>
+            <nav class="nav">
+            </nav>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="post-detail">
+            <div id="postContent">
+                <div class="loading">게시글을 불러오는 중...</div>
+            </div>
+
+            <div class="comments-section">
+                <h2 class="comments-title">댓글 <span id="commentCount">0</span></h2>
+
+                <form id="commentForm" class="hidden">
+                    <div class="comment-input-container">
+                        <textarea id="commentContent" class="form-textarea" placeholder="댓글을 입력하세요" required></textarea>
+                        <div class="comment-submit-area">
+                            <button type="submit" class="icon-btn primary" aria-label="댓글 작성">
+                                <i class="fas fa-paper-plane"></i>
+                            </button>
+                        </div>
+                    </div>
+                </form>
+
+                <div id="commentsContainer" class="mt-lg">
+                    <div class="loading">댓글을 불러오는 중...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="lightbox" class="lightbox-modal">
+        <button id="lightboxClose" class="lightbox-close">&times;</button>
+        <img id="lightboxImage" class="lightbox-content" src="" alt="Enlarged Image">
+    </div>
+
+    <script src="/js/app.js"></script>
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const postId = urlParams.get('id');
+        let currentUser = null;
+        let currentPost = null;
+
+        async function init() {
+            if (!postId) {
+                window.location.href = '/';
+                return;
+            }
+
+            // Check authentication (optional for viewing)
+            currentUser = await getCurrentUser();
+            // if (!currentUser) {
+            //     window.location.href = '/login.html';
+            //     return;
+            // }
+
+            // Load post and comments
+            await loadPost();
+            await loadComments();
+
+            // Show comment form
+            document.getElementById('commentForm').classList.remove('hidden');
+
+            // Setup comment form
+            document.getElementById('commentForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                if (!currentUser) {
+                    showError('로그인이 필요합니다');
+                    return;
+                }
+
+                const contentInput = document.getElementById('commentContent');
+                const content = contentInput.value.trim();
+
+                if (!content) {
+                    showError('내용을 입력해주세요');
+                    return;
+                }
+
+                try {
+                    await createComment(postId, content);
+                    contentInput.value = '';
+                    await loadComments();
+                    showSuccess('댓글이 등록되었습니다');
+                } catch (error) {
+                    console.error('Comment creation failed:', error);
+                    showError('댓글 작성에 실패했습니다');
+                }
+            });
+
+            setupLightbox();
+        }
+
+        async function loadPost() {
+            try {
+                const post = await getPost(postId);
+                console.log('Loaded post:', post); // Debug log
+
+                if (!post) {
+                    throw new Error('Post not found or API error');
+                }
+
+                currentPost = post;
+                // ... (rest of the rendering logic) ...
+                const authorName = post.authorNickname || post.authorUsername || '익명';
+
+                // Check permissions
+                const isOwner = currentUser && post.authorUsername === currentUser.username;
+                const isAdmin = currentUser && currentUser.role === 'ADMIN';
+                const showActions = isOwner || isAdmin;
+
+                const isAnonymousBoard = post.boardId === 'anonymous';
+                const topAuthorClass = (isAnonymousBoard && post.authorRole !== 'ADMIN') ? ' post-author' : '';
+
+                document.getElementById('postContent').innerHTML = `
+                    <div class="post-detail-header">
+                        <div class="avatar"><i class="fas fa-user"></i></div>
+                        <div class="post-author-row">
+                            <div class="author-info">
+                                ${post.authorRole === 'ADMIN' ?
+                        `<span class="admin-nickname-container"><i class="fas fa-camera"></i> ${post.authorAnonymousNickname || post.authorNickname}</span>` :
+                        `<span class="user-nickname-badge${topAuthorClass}"><i class="fas fa-user"></i> ${post.authorAnonymousNickname || post.authorNickname}</span>`
+                    }
+                                <span class="view-count-detail"><i class="fas fa-eye"></i> ${formatNumber(post.viewCount)}</span>
+                                
+                                ${showActions ? `
+                                <div class="post-actions">
+                                    ${isOwner ? `
+                                    <button class="icon-btn primary" onclick="goToEditPage()" aria-label="수정" style="width: 38px; height: 38px; font-size: 16px;">
+                                        <i class="fas fa-pen"></i>
+                                    </button>` : ''}
+                                    <button class="icon-btn danger" onclick="handleDeletePost()" aria-label="삭제" style="width: 38px; height: 38px; font-size: 16px;">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                                ` : ''}
+                            </div>
+                            <div class="post-date">${formatDate(post.createdAt)}</div>
+                        </div>
+                    </div>
+                    <h1 class="post-detail-title">${escapeHtml(post.title)}</h1>
+                    <div class="post-detail-images">
+                        ${post.imageUrl ? `<img src="${post.imageUrl}" alt="Post Image 1" onclick="openLightbox('${post.imageUrl}')">` : ''}
+                        ${post.imageUrl2 ? `<img src="${post.imageUrl2}" alt="Post Image 2" onclick="openLightbox('${post.imageUrl2}')">` : ''}
+                        ${post.imageUrl3 ? `<img src="${post.imageUrl3}" alt="Post Image 3" onclick="openLightbox('${post.imageUrl3}')">` : ''}
+                    </div>
+                    <div class="post-detail-content">${parseContent(post.content)}</div>
+                    
+                    <!-- 추천/반대 투표 버튼 -->
+                    <div class="vote-section" id="postVoteSection">
+                        <button class="vote-btn like-btn ${post.currentUserVote === 'LIKE' ? 'active' : ''}" 
+                                onclick="handlePostVote('LIKE')" 
+                                data-type="LIKE">
+                            <i class="fas fa-thumbs-up"></i>
+                            <span class="vote-count" id="postLikeCount">${post.likeCount || 0}</span>
+                        </button>
+                        <button class="vote-btn dislike-btn ${post.currentUserVote === 'DISLIKE' ? 'active' : ''}" 
+                                onclick="handlePostVote('DISLIKE')" 
+                                data-type="DISLIKE">
+                            <i class="fas fa-thumbs-down"></i>
+                            <span class="vote-count" id="postDislikeCount">${post.dislikeCount || 0}</span>
+                        </button>
+                    </div>
+                `;
+            } catch (error) {
+                console.error('Error loading post:', error);
+                document.getElementById('postContent').innerHTML = `<div class="error-state">게시글을 불러오는 중 오류가 발생했습니다.<br>${error.message}</div>`;
+            }
+        }
+
+        let currentCommentPage = 0;
+
+        async function loadComments(page = 0) {
+            currentCommentPage = page;
+            const data = await getComments(postId, page);
+            const container = document.getElementById('commentsContainer');
+            document.getElementById('commentCount').textContent = data.totalComments;
+
+            // Update user info
+            if (currentUser && currentUser.role === 'ADMIN') {
+                const userInfoElement = document.getElementById('userInfo');
+                if (userInfoElement) {
+                    userInfoElement.innerHTML = `<span class="admin-nickname-container"><i class="fas fa-camera"></i> ${currentUser.nickname}</span>`;
+                }
+            } else if (currentUser) {
+                const userInfoElement = document.getElementById('userInfo');
+                if (userInfoElement) {
+                    userInfoElement.textContent = currentUser.nickname;
+                }
+            }
+
+            if (!data || !data.comments || (data.comments.length === 0 && page === 0)) {
+                container.innerHTML = '<div class="empty-state">아직 댓글이 없습니다</div>';
+                return;
+            }
+
+            let html = data.comments.map(comment => renderComment(comment, false)).join('');
+
+            // Add pagination controls
+            if (data.totalPages > 1) {
+                html += `
+                    <div class="comment-pagination">
+                        <button class="pagination-btn" onclick="loadComments(${page - 1})" ${!data.hasPrevious ? 'disabled' : ''}>
+                            <i class="fas fa-chevron-left"></i> 이전
+                        </button>
+                        <span class="pagination-info">${page + 1} / ${data.totalPages}</span>
+                        <button class="pagination-btn" onclick="loadComments(${page + 1})" ${!data.hasNext ? 'disabled' : ''}>
+                            다음 <i class="fas fa-chevron-right"></i>
+                        </button>
+                    </div>
+                `;
+            }
+
+            container.innerHTML = html;
+        }
+
+        // 댓글 렌더링 함수 (대댓글 지원)
+        function renderComment(comment, isReply = false) {
+            const isAdmin = currentUser && currentUser.role === 'ADMIN';
+            const isAuthor = currentUser && comment.authorUsername === currentUser.username;
+            const canDelete = isAuthor || isAdmin;
+            const displayNickname = comment.anonymousNickname || comment.authorNickname;
+            const isNonAdminAuthor = comment.isAuthor && comment.authorRole !== 'ADMIN';
+            const authorBadge = isNonAdminAuthor ? ' <span class="author-badge">글쓴이</span>' : '';
+            const authorClass = isNonAdminAuthor ? ' post-author' : '';
+            const replyClass = isReply ? ' reply-comment' : '';
+
+            let repliesHtml = '';
+            if (comment.replies && comment.replies.length > 0) {
+                repliesHtml = comment.replies.map(reply => renderComment(reply, true)).join('');
+            }
+
+            // 대댓글이 아닌 경우에만 답글 기능 활성화
+            const canReply = !isReply && currentUser;
+            const contentClass = canReply ? 'comment-content clickable-content' : 'comment-content';
+            const onClickAttr = canReply ? `onclick="toggleReplyForm(${comment.id})"` : '';
+            const titleAttr = canReply ? 'title="클릭하여 답글 달기"' : '';
+
+            return `
+                <div class="comment${replyClass}" data-comment-id="${comment.id}">
+                    <div class="comment-header">
+                        <div class="comment-author-row">
+                            <div class="comment-author-info">
+                                ${comment.authorRole === 'ADMIN' ?
+                    `<span class="admin-nickname-container"><i class="fas fa-camera"></i> ${displayNickname}</span>` :
+                    `<span class="user-nickname-badge${authorClass}"><i class="fas fa-user"></i> ${displayNickname}${authorBadge}</span>`
+                }
+                                <div class="post-date">${formatDate(comment.createdAt)}</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="${contentClass}" ${onClickAttr} ${titleAttr}>${parseContent(comment.content)}</div>
+
+                    <div class="comment-vote-section">
+                        ${canDelete ? `
+                            <button type="button" class="comment-vote-btn delete-btn" onclick="handleDeleteComment(${comment.id})" title="삭제">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
+                        ` : ''}
+                        <button class="comment-vote-btn like-btn ${comment.currentUserVote === 'LIKE' ? 'active' : ''}" 
+                                onclick="handleCommentVote(${comment.id}, 'LIKE')"
+                                data-comment-id="${comment.id}">
+                            <i class="fas fa-thumbs-up"></i>
+                            <span id="commentLike-${comment.id}">${comment.likeCount || 0}</span>
+                        </button>
+                        <button class="comment-vote-btn dislike-btn ${comment.currentUserVote === 'DISLIKE' ? 'active' : ''}" 
+                                onclick="handleCommentVote(${comment.id}, 'DISLIKE')"
+                                data-comment-id="${comment.id}">
+                            <i class="fas fa-thumbs-down"></i>
+                            <span id="commentDislike-${comment.id}">${comment.dislikeCount || 0}</span>
+                        </button>
+                    </div>
+
+                    <!-- 답글 입력 폼 (숨김 상태) -->
+                    <div id="replyForm-${comment.id}" class="reply-form hidden">
+                        <textarea id="replyContent-${comment.id}" class="form-textarea" placeholder="답글을 입력하세요" rows="2"></textarea>
+                        <div class="reply-actions">
+                            <button class="btn btn-sm" onclick="toggleReplyForm(${comment.id})">취소</button>
+                            <button class="btn btn-primary btn-sm" onclick="submitReply(${comment.id})">등록</button>
+                        </div>
+                    </div>
+
+                    <!-- 대댓글 목록 -->
+                    ${repliesHtml}
+                </div>
+            `;
+        }
+
+        // 답글 폼 토글
+        function toggleReplyForm(commentId) {
+            const form = document.getElementById(`replyForm-${commentId}`);
+            if (form) {
+                form.classList.toggle('hidden');
+                if (!form.classList.contains('hidden')) {
+                    document.getElementById(`replyContent-${commentId}`).focus();
+                }
+            }
+        }
+
+        // 답글 등록
+        async function submitReply(parentId) {
+            if (!currentUser) {
+                showError('로그인이 필요합니다');
+                return;
+            }
+
+            const contentInput = document.getElementById(`replyContent-${parentId}`);
+            const content = contentInput.value.trim();
+
+            if (!content) {
+                showError('내용을 입력해주세요');
+                return;
+            }
+
+            try {
+                await createComment(postId, content, '', parentId);
+                contentInput.value = '';
+                toggleReplyForm(parentId);
+                await loadComments(currentCommentPage);
+                showSuccess('답글이 등록되었습니다');
+            } catch (error) {
+                console.error('Reply creation failed:', error);
+                showError('답글 작성에 실패했습니다');
+            }
+        }
+
+        // Expose functions to global scope
+        window.toggleReplyForm = toggleReplyForm;
+        window.submitReply = submitReply;
+
+        async function handleDeleteComment(commentId) {
+            if (confirm('댓글을 삭제하시겠습니까?')) {
+                try {
+                    const token = localStorage.getItem('token');
+                    const response = await fetch(`/api/comments/${commentId}`, {
+                        method: 'DELETE',
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        }
+                    });
+
+                    if (response.ok) {
+                        showSuccess('댓글이 삭제되었습니다');
+                        await loadComments();
+                    } else {
+                        throw new Error('Delete failed');
+                    }
+                } catch (error) {
+                    showError('댓글 삭제에 실패했습니다');
+                }
+            }
+        }
+
+        // Expose handleDeleteComment to global scope for onclick
+        window.handleDeleteComment = handleDeleteComment;
+
+        // Post Edit/Delete Functions
+        function goToEditPage() {
+            const postId = new URLSearchParams(window.location.search).get('id');
+            window.location.href = `post-form.html?id=${postId}`;
+        }
+
+        async function handleDeletePost() {
+            if (!confirm('정말 이 게시글을 삭제하시겠습니까?')) {
+                return;
+            }
+
+            try {
+                const postId = new URLSearchParams(window.location.search).get('id');
+                const success = await deletePost(postId);
+
+                if (success) {
+                    showSuccess('게시글이 삭제되었습니다');
+                    setTimeout(() => {
+                        window.location.href = 'index.html';
+                    }, 1000);
+                } else {
+                    showError('게시글 삭제에 실패했습니다');
+                }
+            } catch (error) {
+                console.error('Delete post error:', error);
+                showError('게시글 삭제 중 오류가 발생했습니다');
+            }
+        }
+
+        // Expose functions to global scope for onclick
+        window.goToEditPage = goToEditPage;
+        window.handleDeletePost = handleDeletePost;
+
+        // Lightbox Functions
+        function setupLightbox() {
+            const lightbox = document.getElementById('lightbox');
+            const closeBtn = document.getElementById('lightboxClose');
+
+            closeBtn.addEventListener('click', closeLightbox);
+            lightbox.addEventListener('click', (e) => {
+                if (e.target === lightbox) {
+                    closeLightbox();
+                }
+            });
+
+            // Escape key to close
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && lightbox.classList.contains('active')) {
+                    closeLightbox();
+                }
+            });
+        }
+
+        function openLightbox(imageUrl) {
+            const lightbox = document.getElementById('lightbox');
+            const lightboxImage = document.getElementById('lightboxImage');
+
+            lightboxImage.src = imageUrl;
+            lightbox.classList.add('active');
+            document.body.style.overflow = 'hidden'; // Prevent scrolling
+        }
+
+        function closeLightbox() {
+            const lightbox = document.getElementById('lightbox');
+            lightbox.classList.remove('active');
+            document.body.style.overflow = ''; // Restore scrolling
+        }
+
+        // Vote handlers
+        async function handlePostVote(type) {
+            if (!currentUser) {
+                showError('로그인이 필요합니다');
+                return;
+            }
+            try {
+                const result = await votePost(postId, type);
+                // Update UI
+                document.getElementById('postLikeCount').textContent = result.likeCount;
+                document.getElementById('postDislikeCount').textContent = result.dislikeCount;
+
+                // Update button states
+                const likeBtn = document.querySelector('.vote-btn.like-btn');
+                const dislikeBtn = document.querySelector('.vote-btn.dislike-btn');
+
+                likeBtn.classList.toggle('active', result.currentUserVote === 'LIKE');
+                dislikeBtn.classList.toggle('active', result.currentUserVote === 'DISLIKE');
+            } catch (error) {
+                showError('투표 처리 중 오류가 발생했습니다');
+            }
+        }
+
+        async function handleCommentVote(commentId, type) {
+            if (!currentUser) {
+                showError('로그인이 필요합니다');
+                return;
+            }
+            try {
+                const result = await voteComment(commentId, type);
+                // Update UI
+                document.getElementById(`commentLike-${commentId}`).textContent = result.likeCount;
+                document.getElementById(`commentDislike-${commentId}`).textContent = result.dislikeCount;
+
+                // Update button states
+                const likeBtn = document.querySelector(`[data-comment-id="${commentId}"].like-btn`);
+                const dislikeBtn = document.querySelector(`[data-comment-id="${commentId}"].dislike-btn`);
+
+                if (likeBtn) likeBtn.classList.toggle('active', result.currentUserVote === 'LIKE');
+                if (dislikeBtn) dislikeBtn.classList.toggle('active', result.currentUserVote === 'DISLIKE');
+            } catch (error) {
+                showError('투표 처리 중 오류가 발생했습니다');
+            }
+        }
+
+        // Expose functions to global scope for inline onclick
+        window.openLightbox = openLightbox;
+        window.handlePostVote = handlePostVote;
+        window.handleCommentVote = handleCommentVote;
+
+        init();
+    </script>
+</body>
+
+</html>

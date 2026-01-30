@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>회원가입 - OFF THE RECORD</title>
+    <link rel="stylesheet" href="/css/style.css?v=7">
+</head>
+
+<body>
+    <div class="form-container">
+        <div style="text-align: center; margin-bottom: 24px;">
+            <a href="/" class="logo" style="justify-content: center;">
+                OFF THE RECORD
+            </a>
+        </div>
+        <h1 class="form-title">회원가입</h1>
+        <form id="signupForm">
+            <div class="form-group">
+                <label class="form-label" for="username">아이디</label>
+                <div style="display: flex; gap: 8px;">
+                    <input type="text" id="username" class="form-input" placeholder="6-30자 영문 대소문자 및 숫자" required
+                        minlength="6" maxlength="30" pattern="^[a-zA-Z0-9]+$" style="flex: 1;">
+                    <button type="button" class="btn btn-secondary" onclick="checkUsername()"
+                        style="white-space: nowrap;">
+                        중복확인
+                    </button>
+                </div>
+                <small id="usernameCheck" style="display: none; margin-top: 4px;"></small>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="password">비밀번호</label>
+                <input type="password" id="password" class="form-input" placeholder="최소 6자 이상의 비밀번호를 입력하세요" required
+                    minlength="6">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="confirmPassword">비밀번호 확인</label>
+                <input type="password" id="confirmPassword" class="form-input" placeholder="비밀번호를 다시 입력하세요" required
+                    minlength="6">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="nickname">별명</label>
+                <div style="display: flex; gap: 8px;">
+                    <input type="text" id="nickname" class="form-input" placeholder="2-10자 [변경불가]" required
+                        minlength="2" maxlength="10" style="flex: 1;">
+                    <button type="button" class="btn btn-secondary" onclick="checkNickname()"
+                        style="white-space: nowrap;">
+                        중복확인
+                    </button>
+                </div>
+                <small id="nicknameCheck" style="display: none; margin-top: 4px;"></small>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="email">이메일</label>
+                <input type="email" id="email" class="form-input" placeholder="example@email.com" required>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="phoneNumber">핸드폰번호 (선택)</label>
+                <input type="tel" id="phoneNumber" class="form-input" placeholder="010-1234-5678"
+                    pattern="^010-\d{4}-\d{4}$">
+                <small style="color: var(--text-muted); font-size: 0.85rem;">010-XXXX-XXXX 형식으로 입력하세요</small>
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="width: 100%;">
+                회원가입
+            </button>
+        </form>
+
+        <div class="form-link">
+            이미 계정이 있으신가요? <a href="/login.html">로그인</a>
+        </div>
+    </div>
+
+    <script src="/js/app.js"></script>
+    <script>
+        let usernameChecked = false;
+        let nicknameChecked = false;
+
+        async function checkUsername() {
+            const username = document.getElementById('username').value;
+            const usernameRegex = /^[a-zA-Z0-9]{6,30}$/;
+
+            if (!username) {
+                showError('아이디를 입력하세요');
+                return;
+            }
+
+            if (!usernameRegex.test(username)) {
+                showError('아이디는 6-30자의 영문 대소문자 및 숫자만 가능합니다');
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/auth/check-username?username=${encodeURIComponent(username)}`);
+                const data = await response.json();
+
+                const checkElement = document.getElementById('usernameCheck');
+                checkElement.style.display = 'block';
+                checkElement.textContent = data.message;
+                checkElement.style.color = data.available ? 'var(--success)' : 'var(--danger)';
+
+                usernameChecked = data.available;
+
+                if (data.available) {
+                    showSuccess(data.message);
+                } else {
+                    showError(data.message);
+                }
+            } catch (error) {
+                showError('중복 확인 중 오류가 발생했습니다');
+            }
+        }
+
+        async function checkNickname() {
+            const nickname = document.getElementById('nickname').value;
+
+            if (!nickname) {
+                showError('별명을 입력하세요');
+                return;
+            }
+
+            if (nickname.length < 2 || nickname.length > 10) {
+                showError('별명은 2-10자 사이여야 합니다');
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/auth/check-nickname?nickname=${encodeURIComponent(nickname)}`);
+                const data = await response.json();
+
+                const checkElement = document.getElementById('nicknameCheck');
+                checkElement.style.display = 'block';
+                checkElement.textContent = data.message;
+                checkElement.style.color = data.available ? 'var(--success)' : 'var(--danger)';
+
+                nicknameChecked = data.available;
+
+                if (data.available) {
+                    showSuccess(data.message);
+                } else {
+                    showError(data.message);
+                }
+            } catch (error) {
+                showError('중복 확인 중 오류가 발생했습니다');
+            }
+        }
+
+        // Reset check status when input changes
+        document.getElementById('username').addEventListener('input', () => {
+            usernameChecked = false;
+            document.getElementById('usernameCheck').style.display = 'none';
+        });
+
+        document.getElementById('nickname').addEventListener('input', () => {
+            nicknameChecked = false;
+            document.getElementById('nicknameCheck').style.display = 'none';
+        });
+
+        document.getElementById('signupForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            const nickname = document.getElementById('nickname').value;
+            const email = document.getElementById('email').value;
+            const phoneNumber = document.getElementById('phoneNumber').value;
+
+            // Username validation (Alphanumeric 6-30)
+            const usernameRegex = /^[a-zA-Z0-9]{6,30}$/;
+            if (!usernameRegex.test(username)) {
+                showError('아이디는 6-30자의 영문 대소문자 및 숫자만 가능합니다');
+                return;
+            }
+
+            // Check if username duplicate check was performed
+            if (!usernameChecked) {
+                showError('아이디 중복 확인을 해주세요');
+                return;
+            }
+
+            // Nickname validation (2-10)
+            if (nickname.length < 2 || nickname.length > 10) {
+                showError('별명은 2-10자 사이여야 합니다');
+                return;
+            }
+
+            // Check if nickname duplicate check was performed
+            if (!nicknameChecked) {
+                showError('별명 중복 확인을 해주세요');
+                return;
+            }
+
+            if (password !== confirmPassword) {
+                showError('비밀번호가 일치하지 않습니다');
+                return;
+            }
+
+            // Phone number validation (if provided)
+            if (phoneNumber && !/^010-\d{4}-\d{4}$/.test(phoneNumber)) {
+                showError('핸드폰번호는 010-XXXX-XXXX 형식이어야 합니다');
+                return;
+            }
+
+            const result = await signup(username, password, nickname, email, phoneNumber);
+
+            if (result.success) {
+                showSuccess('회원가입이 완료되었습니다!');
+                window.location.href = '/login.html';
+            } else {
+                showError(result.message || '회원가입에 실패했습니다');
+            }
+        });
+    </script>
+</body>
+
+</html>
