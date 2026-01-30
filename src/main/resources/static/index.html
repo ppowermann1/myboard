@@ -513,4 +513,226 @@
         </div>
     </div>
 
+
+    <!-- Floating Schedule Button (Left Side) -->
+    <button class="floating-schedule-btn" onclick="openScheduleModal()" aria-label="스케줄러">
+        <i class="fas fa-calendar-alt"></i>
+    </button>
+
+    <!-- Schedule Modal -->
+    <div id="scheduleModal" class="modal-overlay">
+        <div class="modal-content schedule-modal-content">
+            <h3 class="modal-title">기능 선택</h3>
+
+            <div class="feature-select-buttons">
+                <button class="btn-feature-select active" onclick="showScheduleFeature('calendar')">
+                    <i class="fas fa-calendar-alt"></i> 달력
+                </button>
+            </div>
+
+            <div id="calendarFeature" class="schedule-feature-content">
+                <div class="calendar-header">
+                    <button class="calendar-nav-btn" onclick="prevMonth()"><i class="fas fa-chevron-left"></i></button>
+                    <span id="calendarMonthYear" class="calendar-month-year"></span>
+                    <button class="calendar-nav-btn" onclick="nextMonth()"><i class="fas fa-chevron-right"></i></button>
+                </div>
+                <div class="calendar-weekdays">
+                    <span>일</span><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span>
+                </div>
+                <div id="calendarGrid" class="calendar-grid"></div>
+
+                <div id="scheduleForm" class="schedule-form hidden">
+                    <h4 id="selectedDateTitle" class="schedule-form-title"></h4>
+                    <div class="schedule-form-group"><label>촬영 시작</label><input type="time" id="filmingStartTime"
+                            class="schedule-input"></div>
+                    <div class="schedule-form-group"><label>촬영 종료</label><input type="time" id="filmingEndTime"
+                            class="schedule-input"></div>
+                    <div class="schedule-form-group"><label>프로덕션</label><input type="text" id="productionName"
+                            class="schedule-input" placeholder="프로덕션 이름"></div>
+                    <div class="schedule-form-group"><label>담당 PD</label><input type="text" id="pdName"
+                            class="schedule-input" placeholder="PD 이름"></div>
+                    <div class="schedule-form-group"><label>PD 연락처</label><input type="text" id="pdContact"
+                            class="schedule-input" placeholder="010-0000-0000"></div>
+                    <div class="schedule-form-group"><label>메모</label><textarea id="scheduleMemo"
+                            class="schedule-textarea" placeholder="메모를 입력하세요"></textarea></div>
+                    <div class="schedule-form-buttons">
+                        <button class="btn btn-primary" onclick="saveSchedule()">저장</button>
+                        <button class="btn btn-secondary" onclick="cancelScheduleForm()">취소</button>
+                    </div>
+                </div>
+                <div id="scheduleList" class="schedule-list"></div>
+            </div>
+            <button class="btn-modal-close" onclick="closeScheduleModal()">닫기</button>
+        </div>
+    </div>
+
+    <script>
+        let currentCalendarDate = new Date();
+        let selectedDate = null;
+        let editingScheduleId = null;
+
+        function openScheduleModal() {
+            if (!currentUser) { showError('로그인이 필요한 기능입니다.'); return; }
+            document.getElementById('scheduleModal').classList.add('active');
+            renderCalendar();
+        }
+        function closeScheduleModal() {
+            document.getElementById('scheduleModal').classList.remove('active');
+            cancelScheduleForm();
+        }
+        function showScheduleFeature(feature) {
+            document.querySelectorAll('.btn-feature-select').forEach(btn => btn.classList.remove('active'));
+            event.target.closest('.btn-feature-select').classList.add('active');
+        }
+        function renderCalendar() {
+            const year = currentCalendarDate.getFullYear();
+            const month = currentCalendarDate.getMonth();
+            document.getElementById('calendarMonthYear').textContent = `${year}년 ${month + 1}월`;
+            const firstDay = new Date(year, month, 1);
+            const lastDay = new Date(year, month + 1, 0);
+            const startingDay = firstDay.getDay();
+            const totalDays = lastDay.getDate();
+            const grid = document.getElementById('calendarGrid');
+            grid.innerHTML = '';
+            for (let i = 0; i < startingDay; i++) {
+                const emptyCell = document.createElement('div');
+                emptyCell.className = 'calendar-day empty';
+                grid.appendChild(emptyCell);
+            }
+            const today = new Date();
+            for (let day = 1; day <= totalDays; day++) {
+                const dayCell = document.createElement('div');
+                dayCell.className = 'calendar-day';
+                dayCell.textContent = day;
+                const cellDate = new Date(year, month, day);
+                const dateStr = cellDate.toISOString().split('T')[0];
+                dayCell.dataset.date = dateStr;
+                if (cellDate.toDateString() === today.toDateString()) dayCell.classList.add('today');
+                if (selectedDate === dateStr) dayCell.classList.add('selected');
+                dayCell.onclick = () => selectCalendarDate(dateStr, day);
+                grid.appendChild(dayCell);
+            }
+            loadMonthSchedules(year, month + 1);
+        }
+        function prevMonth() { currentCalendarDate.setMonth(currentCalendarDate.getMonth() - 1); renderCalendar(); }
+        function nextMonth() { currentCalendarDate.setMonth(currentCalendarDate.getMonth() + 1); renderCalendar(); }
+        function selectCalendarDate(dateStr, day) {
+            selectedDate = dateStr;
+            document.querySelectorAll('.calendar-day').forEach(cell => {
+                cell.classList.remove('selected');
+                if (cell.dataset.date === dateStr) cell.classList.add('selected');
+            });
+            document.getElementById('scheduleForm').classList.remove('hidden');
+            document.getElementById('selectedDateTitle').textContent = `${currentCalendarDate.getFullYear()}년 ${currentCalendarDate.getMonth() + 1}월 ${day}일`;
+            clearScheduleForm();
+            loadDateSchedules(dateStr);
+        }
+        function clearScheduleForm() {
+            document.getElementById('filmingStartTime').value = '';
+            document.getElementById('filmingEndTime').value = '';
+            document.getElementById('productionName').value = '';
+            document.getElementById('pdName').value = '';
+            document.getElementById('pdContact').value = '';
+            document.getElementById('scheduleMemo').value = '';
+            editingScheduleId = null;
+        }
+        function cancelScheduleForm() {
+            document.getElementById('scheduleForm').classList.add('hidden');
+            selectedDate = null;
+            editingScheduleId = null;
+            renderCalendar();
+        }
+        async function loadMonthSchedules(year, month) {
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`/api/schedules/month?year=${year}&month=${month}`, { headers: { 'Authorization': `Bearer ${token}` } });
+                if (response.ok) {
+                    const schedules = await response.json();
+                    schedules.forEach(schedule => {
+                        const dayCell = document.querySelector(`.calendar-day[data-date="${schedule.scheduleDate}"]`);
+                        if (dayCell) dayCell.classList.add('has-schedule');
+                    });
+                }
+            } catch (error) { console.error('Failed to load month schedules:', error); }
+        }
+        async function loadDateSchedules(dateStr) {
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`/api/schedules/date?date=${dateStr}`, { headers: { 'Authorization': `Bearer ${token}` } });
+                if (response.ok) { const schedules = await response.json(); renderScheduleList(schedules); }
+            } catch (error) { console.error('Failed to load date schedules:', error); }
+        }
+        function renderScheduleList(schedules) {
+            const list = document.getElementById('scheduleList');
+            if (schedules.length === 0) { list.innerHTML = '<div class="no-schedules">등록된 스케줄이 없습니다</div>'; return; }
+            list.innerHTML = schedules.map(schedule => `
+                <div class="schedule-item" data-id="${schedule.id}">
+                    <div class="schedule-item-header">
+                        <span class="schedule-time">${schedule.filmingStartTime || '??:??'} - ${schedule.filmingEndTime || '??:??'}</span>
+                        <div class="schedule-item-actions">
+                            <button onclick="editSchedule(${schedule.id})" class="btn-icon"><i class="fas fa-edit"></i></button>
+                            <button onclick="deleteSchedule(${schedule.id})" class="btn-icon danger"><i class="fas fa-trash"></i></button>
+                        </div>
+                    </div>
+                    <div class="schedule-item-details">
+                        ${schedule.productionName ? `<div><strong>프로덕션:</strong> ${schedule.productionName}</div>` : ''}
+                        ${schedule.pdName ? `<div><strong>담당 PD:</strong> ${schedule.pdName}</div>` : ''}
+                        ${schedule.pdContact ? `<div><strong>연락처:</strong> ${schedule.pdContact}</div>` : ''}
+                        ${schedule.memo ? `<div><strong>메모:</strong> ${schedule.memo}</div>` : ''}
+                    </div>
+                </div>`).join('');
+        }
+        async function saveSchedule() {
+            if (!selectedDate) { showError('날짜를 선택해주세요'); return; }
+            const data = {
+                scheduleDate: selectedDate,
+                filmingStartTime: document.getElementById('filmingStartTime').value || null,
+                filmingEndTime: document.getElementById('filmingEndTime').value || null,
+                productionName: document.getElementById('productionName').value || null,
+                pdName: document.getElementById('pdName').value || null,
+                pdContact: document.getElementById('pdContact').value || null,
+                memo: document.getElementById('scheduleMemo').value || null
+            };
+            try {
+                const token = localStorage.getItem('token');
+                const url = editingScheduleId ? `/api/schedules/${editingScheduleId}` : '/api/schedules';
+                const method = editingScheduleId ? 'PUT' : 'POST';
+                const response = await fetch(url, { method, headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+                if (response.ok) { showSuccess(editingScheduleId ? '스케줄이 수정되었습니다' : '스케줄이 저장되었습니다'); clearScheduleForm(); loadDateSchedules(selectedDate); renderCalendar(); }
+                else { throw new Error('Save failed'); }
+            } catch (error) { showError('스케줄 저장에 실패했습니다'); }
+        }
+        async function editSchedule(id) {
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`/api/schedules/date?date=${selectedDate}`, { headers: { 'Authorization': `Bearer ${token}` } });
+                if (response.ok) {
+                    const schedules = await response.json();
+                    const schedule = schedules.find(s => s.id === id);
+                    if (schedule) {
+                        document.getElementById('filmingStartTime').value = schedule.filmingStartTime || '';
+                        document.getElementById('filmingEndTime').value = schedule.filmingEndTime || '';
+                        document.getElementById('productionName').value = schedule.productionName || '';
+                        document.getElementById('pdName').value = schedule.pdName || '';
+                        document.getElementById('pdContact').value = schedule.pdContact || '';
+                        document.getElementById('scheduleMemo').value = schedule.memo || '';
+                        editingScheduleId = id;
+                    }
+                }
+            } catch (error) { showError('스케줄을 불러오는데 실패했습니다'); }
+        }
+        async function deleteSchedule(id) {
+            if (!confirm('이 스케줄을 삭제하시겠습니까?')) return;
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`/api/schedules/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
+                if (response.ok) { showSuccess('스케줄이 삭제되었습니다'); loadDateSchedules(selectedDate); renderCalendar(); }
+                else { throw new Error('Delete failed'); }
+            } catch (error) { showError('스케줄 삭제에 실패했습니다'); }
+        }
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('scheduleModal').addEventListener('click', (e) => { if (e.target.id === 'scheduleModal') closeScheduleModal(); });
+        });
+    </script>
+
 </html>
